@@ -4,7 +4,8 @@
 
 #include <basic_menu.h>
 
-//using namespace std;
+#ifdef EN_M_SERIAL
+
 
 class serial_display:public text_display{
 public:
@@ -12,7 +13,7 @@ public:
     
     serial_display(Stream *disp){
         display = disp;
-        rows = 155;
+        rows = 255;
         cols = 80;
     };
     //curses_display(uint8_t r,uint8_t c,uint8_t y,uint8_t x);
@@ -29,5 +30,6 @@ public:
     void refresh(){};
 };
 
+#endif
 
 #endif

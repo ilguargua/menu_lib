@@ -1,3 +1,13 @@
+/*
+ * menu_lib
+ * An Arduino library for menus & editing variables
+ * 
+ * by ilguargua@gmail.com - 2021
+ * 
+ */
+
+
+
 #ifndef __BASIC_MENU_H__
 
 #define __BASIC_MENU_H__
@@ -9,7 +19,7 @@
 #define EN_M_U8X8   1
 //#define EN_GFX
 #define EN_M_LQ
-//#define EN_SERIAL
+//#define EN_M_SERIAL
 
 #define EN_M_NEXTION
 
@@ -27,8 +37,12 @@
 #endif
 
 
-//#ifndef M_BF_LEN
+//This is the len of memory buffer used by text_display and edit_item classes
+//Should be long at least as the numb. of char of display+1
 #define MENU_BUF_LEN 22
+
+
+
 //#warning menu_buf_len not defined! use default (30)
 //#else
 //#define MENU_BUF_LEN M_BF_LEN
@@ -100,7 +114,11 @@ public:
     char    conv_buf[MENU_BUF_LEN];
     
     
-    text_display();
+    text_display(){
+        rows = 0;
+        cols = 0;
+        memset(conv_buf,0,MENU_BUF_LEN);
+    };
 
     virtual void get_display_data(){};
     bool chk_data(){return rows > 0 && cols >0; };

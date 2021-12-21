@@ -130,7 +130,7 @@ void basic_menu::set_items(const char *base,uint8_t cnt,uint8_t item_l){
     items.len = item_l+1;
     cur_item = 0;
     start_item = 0;
-    title = nullptr;
+    //title = nullptr;
 }
 
 void basic_menu::move_next(){
@@ -226,113 +226,4 @@ void basic_menu::draw_menu(){
     }
     device->refresh();
 }
-
-/***************************************************************/
-
-
-
-
-text_display::text_display(){
-    rows = 0;
-    cols = 0;
-    memset(conv_buf,0,MENU_BUF_LEN);
-}
-
-/*
-void text_display::print(uint8_t row,uint8_t col,int val,uint8_t base,uint8_t rev){
-#ifdef USE_SPRINTF
-    char fmt[5];
-    switch(base){
-        case 8:
-            strcpy(fmt,"%o");
-            break;
-        case 16:
-            strcpy(fmt,"%X");
-            break;
-        default:
-            strcpy(fmt,"%i");
-    }
-    snprintf(conv_buf,MENU_BUF_LEN,fmt,val);
-#else    
-    itoa(val,conv_buf,base);
-#endif    
-    print(row,col,conv_buf,rev);
-}
-
-void text_display::print(uint8_t row,uint8_t col,unsigned int val,uint8_t base,uint8_t rev){
-#ifdef USE_SPRINTF
-    char fmt[5];
-    switch(base){
-        case 8:
-            strcpy(fmt,"%o");
-            break;
-        case 16:
-            strcpy(fmt,"%X");
-            break;
-        default:
-            strcpy(fmt,"%u");
-    }
-    
-    snprintf(conv_buf,MENU_BUF_LEN,fmt,val);
-#else    
-    utoa(val,conv_buf,base);
-#endif    
-    print(row,col,conv_buf,rev);
-    
-}
-
-void text_display::print(uint8_t row,uint8_t col,long val,uint8_t base,uint8_t rev){
-#ifdef USE_SPRINTF
-    char fmt[5];
-    switch(base){
-        case 8:
-            strcpy(fmt,"%lo");
-            break;
-        case 16:
-            strcpy(fmt,"%lX");
-            break;
-        default:
-            strcpy(fmt,"%li");
-    }
-    snprintf(conv_buf,MENU_BUF_LEN,fmt,val);
-#else    
-    ltoa(val,conv_buf,base);
-#endif    
-    print(row,col,conv_buf,rev);
-}
-
-void text_display::print(uint8_t row,uint8_t col,unsigned long val,uint8_t base,uint8_t rev){
-#ifdef USE_SPRINTF
-    char fmt[5];
-    switch(base){
-        case 8:
-            strcpy(fmt,"%lo");
-            break;
-        case 16:
-            strcpy(fmt,"%lX");
-            break;
-        default:
-            strcpy(fmt,"%lu");
-    }
-    snprintf(conv_buf,MENU_BUF_LEN,fmt,val);
-#else    
-    ultoa(val,conv_buf,base);
-#endif    
-    print(row,col,conv_buf,rev);
-    
-}
-*/
-
-/**********************************************************************************/
-
-/*
-template <typename T>
-edit_numb::edit_numb(T val,T min,T max):edit_item(EDT_NUMB){
-    value=val;
-    min_val=min;
-    max_val=max;
-    
-}
-*/
-
 
