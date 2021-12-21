@@ -22,11 +22,17 @@ int edt_var = 1234;
 float f = 1234.56;
 bool  b = true;
 
+/*
 edit_item *edt_bool = new edit_bool("bool",b);
 edit_item *edt_int = new edit_numb<int>(NMB_S_INT,"int16",edt_var,-4321,9999);
 edit_item *edt_float = new edit_numb<float>(NMB_FLOAT,"float",f,1200,1300);
 edit_item *edt_list = new edit_list("list",mm_items[0],3,mm_items_len);
+*/
 
+edit_bool edt_bool("bool",b);
+edit_numb<int> edt_int(NMB_S_INT,"int16",edt_var,-4321,9999);
+edit_numb<float> edt_float(NMB_FLOAT,"float",f,1200,1300);
+edit_list edt_list("list",mm_items[0],3,mm_items_len);
 //pb_collection btns;
 
 //push_button up = push_button(MNU_PB_UP,LOW,M_PB_UP);
@@ -47,13 +53,13 @@ void setup(){
     
     lcd.begin(20,4);
     
-    edt_float->set_edit_mode(EDT_MODE_DIGIT);
-    edt_int->set_edit_mode(EDT_MODE_DIGIT);
-    mm.add_item(edt_float);
-    mm.add_item(edt_bool);
-    mm.add_item(edt_int);
+    edt_float.set_edit_mode(EDT_MODE_DIGIT);
+    edt_int.set_edit_mode(EDT_MODE_DIGIT);
+    mm.add_item(&edt_float);
+    mm.add_item(&edt_bool);
+    mm.add_item(&edt_int);
     
-    mm.add_item(edt_list);
+    mm.add_item(&edt_list);
     //mm.set_device(&dev);
     //mm.set_items(mm_items[0],mm_items_cnt,mm_items_len);
     mm.set_options(M_PRINT_CLEAR);

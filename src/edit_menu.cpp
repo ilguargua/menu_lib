@@ -1,5 +1,6 @@
 #include <edit_menu.h>
 
+//char  conv_buf[MENU_BUF_LEN];
 
 uint8_t edit_item::set_next_digit(){
     if(edt_mode != EDT_MODE_DIGIT) return 0;

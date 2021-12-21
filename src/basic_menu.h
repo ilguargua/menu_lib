@@ -2,7 +2,7 @@
 
 #define __BASIC_MENU_H__
 
-//enable/disable interface
+//enable/disable interfaces
 
 //#define EN_M_CURSES
 //#define EN_M_U8G2
@@ -11,7 +11,7 @@
 #define EN_M_LQ
 //#define EN_SERIAL
 
-#define EN_M_NEXTION
+//#define EN_M_NEXTION
 
 #ifdef EN_M_CURSES
 #include <curses.h>

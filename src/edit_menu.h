@@ -49,6 +49,9 @@ typedef enum{
     EDT_STATE_EDIT
 } edt_state_t;
 
+
+//char        conv_buf[MENU_BUF_LEN] = {0};
+
 class edit_item{
 public:
     uint8_t     type;       //edt_type_t
@@ -187,6 +190,7 @@ const char      ip_txt_fmt[] = "% 3u:% 3u:% 3u:% 3u";
 const char      ip_edt_fmt[] = "%03u:%03u:%03u:%03u";
 const uint8_t   ip_fmt_len = 14;
 
+
 class edit_ip:public edit_item{
 public:
     
@@ -210,6 +214,7 @@ public:
     uint8_t     set_next_digit();
     
 };
+
 
 const char ban_chars[] = "\"%";
 
@@ -275,9 +280,10 @@ public:
         //mnu = new basic_menu(nullptr,base,cnt,item_l,1);
         txt = text;
         edt_mode = EDT_MODE_STEP;
-        items.base = base;
-        items.cnt = cnt;
-        items.len = item_l;
+        set_items(base,cnt,item_l);
+        //items.base = base;
+        //items.cnt = cnt;
+        //items.len = item_l;
         disp_rows = 1;
         device = nullptr;
     };
@@ -295,7 +301,8 @@ public:
     
     const char *get_txt_value(){
         //return mnu->get_row(mnu->cur_item);
-        return get_row(0);
+        //return get_row(0);
+        return items[cur_item];
     }
     
 };
