@@ -11,7 +11,7 @@
 #define EN_M_LQ
 //#define EN_SERIAL
 
-//#define EN_M_NEXTION
+#define EN_M_NEXTION
 
 #ifdef EN_M_CURSES
 #include <curses.h>

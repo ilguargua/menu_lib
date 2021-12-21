@@ -32,7 +32,7 @@ void nextion_display::print(uint8_t row,uint8_t col,const char *txt,uint8_t rev)
     uint16_t fg = rev > 0 ? NXT_BG_COLOR : NXT_FG_COLOR;
     uint16_t bg = rev == 0 ? NXT_BG_COLOR : NXT_FG_COLOR;
     memset(conv_buf,0,MENU_BUF_LEN);
-    snprinf(conv_buf,MENU_BUF_LEN-1,XSTR_FMT,
+    snprintf(conv_buf,MENU_BUF_LEN-1,XSTR_FMT,
             menu_x+(row*col_l),
             menu_y+(col*row_h),
             strlen(txt)*col_l,
@@ -43,7 +43,7 @@ void nextion_display::print(uint8_t row,uint8_t col,const char *txt,uint8_t rev)
             txt,
             NXT_MSG_END
             );
-    ser.print(conv_buf);
+    ser->print(conv_buf);
 }
 
 
@@ -51,7 +51,7 @@ void nextion_display::clear_row(uint8_t row,uint8_t col, uint8_t w,uint8_t rev){
     uint16_t fc = rev == 0 ? NXT_BG_COLOR : NXT_FG_COLOR;
     if(w == 0) w = cols - col ; //default to end of line
     memset(conv_buf,0,MENU_BUF_LEN);
-    snprinf(conv_buf,MENU_BUF_LEN-1,FILL_FMT,
+    snprintf(conv_buf,MENU_BUF_LEN-1,FILL_FMT,
             menu_x+(row*col_l),
             menu_y+(col*row_h),
             w*col_l,
@@ -61,26 +61,26 @@ void nextion_display::clear_row(uint8_t row,uint8_t col, uint8_t w,uint8_t rev){
 }
 
 
-void nextion_display::clear__display(){
-    snprinf(conv_buf,MENU_BUF_LEN-1,FILL_FMT,
+void nextion_display::clear_display(){
+    snprintf(conv_buf,MENU_BUF_LEN-1,FILL_FMT,
             menu_x - 1,
             menu_y - 1,
-            cols * f_l,
-            rows * f_h,
+            cols * col_l,
+            rows * row_h,
             NXT_BG_COLOR,
             NXT_MSG_END
             );
-    ser.print(conv_buf);
+    ser->print(conv_buf);
     memset(conv_buf,0,MENU_BUF_LEN);
-    snprinf(conv_buf,MENU_BUF_LEN-1,DRAW_FMT,
+    snprintf(conv_buf,MENU_BUF_LEN-1,DRAW_FMT,
             menu_x ,
             menu_y ,
-            menu_x+(cols * f_l),
-            menu_y+(rows * f_h),
+            menu_x+(cols * col_l),
+            menu_y+(rows * row_h),
             NXT_FG_COLOR,
             NXT_MSG_END
             );
-   ser.print(conv_buf);
+   ser->print(conv_buf);
 }
 
 
@@ -91,13 +91,13 @@ uint16_t nextion_display::get_nextion_data(char d){
     //getting display data by asking page width and height
     //empty serial buffer in case there is some previous data
     //WARNING thi may lost some data your progr is expecting
-    while(ser.available()) ser.read();
-    snprinf(conv_buf,MENU_BUF_LEN-1,GET_FMT,d,NXT_MSG_END);
-    ser.print(conv_buf);
+    while(ser->available()) ser->read();
+    snprintf(conv_buf,MENU_BUF_LEN-1,GET_FMT,d,NXT_MSG_END);
+    ser->print(conv_buf);
     memset(conv_buf,0,MENU_BUF_LEN);
     delay(5);
-    while(ser.available()){
-        b = ser.read();
+    while(ser->available()){
+        b = ser->read();
         if(b != -1 and cnt < MENU_BUF_LEN-1){
             conv_buf[cnt]=b;
             cnt++;
@@ -109,8 +109,8 @@ uint16_t nextion_display::get_nextion_data(char d){
 
 void nextion_display::restore_display(){
     memset(conv_buf,0,MENU_BUF_LEN);
-    snprinf(conv_buf,MENU_BUF_LEN-1,REF_FMT,NXT_MSG_END);
-    ser.print(conv_buf);
+    snprintf(conv_buf,MENU_BUF_LEN-1,REF_FMT,NXT_MSG_END);
+    ser->print(conv_buf);
 }
 
 #endif
