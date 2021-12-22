@@ -1,5 +1,6 @@
 #include <edit_menu.h>
 
+
 //char  conv_buf[MENU_BUF_LEN];
 
 uint8_t edit_item::set_next_digit(){
@@ -38,7 +39,7 @@ uint8_t edit_item::set_next_char(){
 /*******************************************************************************/
 
 
-edit_ip::edit_ip(const char *itm_txt,uint8_t ip1,uint8_t ip2,uint8_t ip3,uint8_t ip4):edit_item(EDT_IP){
+edit_ip::edit_ip(const char *itm_txt,uint8_t &ip1,uint8_t &ip2,uint8_t &ip3,uint8_t &ip4):edit_item(EDT_IP){
     value[3] = ip1;
     value[2] = ip2;
     value[1] = ip3;
@@ -55,7 +56,6 @@ edit_ip::edit_ip(const char *itm_txt,uint8_t ip1,uint8_t ip2,uint8_t ip3,uint8_t
 
 const char * edit_ip::get_txt_value(){
     memset(conv_buf,0,MENU_BUF_LEN);
-    //if(fmt == 0) snprintf(conv_buf,MENU_BUF_LEN,ip_txt_fmt,value[3],value[2],value[1],value[0]);
     snprintf(conv_buf,MENU_BUF_LEN,cur_fmt,value[3],value[2],value[1],value[0]);
     return conv_buf;
 }
@@ -89,6 +89,237 @@ uint8_t edit_ip::set_next_digit(){
     }
     else set_next_step();
     return 1;
+}
+
+/********************************************************************************/
+
+edit_time::edit_time(const char *itm_txt,uint8_t &h,uint8_t &m,uint8_t &s):edit_item(EDT_TIME){
+    value[TM_HOUR] = h;
+    value[TM_MIN] = m;
+    value[TM_SEC] = s;
+    txt = itm_txt;
+    cur_val = TM_SEC;
+    cur_digit = time_fmt_len;
+    step = 1;
+    n_type = NMB_UCHAR;
+    edt_mode = EDT_MODE_DIGIT;
+    memset(conv_buf,0,MENU_BUF_LEN);
+    
+}
+
+const char * edit_time::get_txt_value(){
+    memset(conv_buf,0,MENU_BUF_LEN);
+    snprintf(conv_buf,MENU_BUF_LEN,time_fmt,value[TM_HOUR],value[TM_MIN],value[TM_SEC]);
+    return conv_buf;
+}
+
+uint8_t edit_time::set_next_value(){
+    uint8_t ret = 0;
+    switch(cur_val){
+        case TM_SEC:
+        case TM_MIN:
+            value[cur_val] = constrain(value[cur_val]+step,0,59);
+            if(value[cur_val] == 59) ret = 1;
+            break;
+        case TM_HOUR:
+            value[cur_val] = constrain(value[cur_val]+step,0,23);
+            if(value[cur_val] == 23) ret = 1;
+            break;
+    }
+    return ret;
+}
+
+uint8_t edit_time::set_prev_value(){
+    uint8_t ret = 0;
+    switch(cur_val){
+        case TM_SEC:
+        case TM_MIN:
+            value[cur_val] = constrain(value[cur_val]-step,0,59);
+            if(value[cur_val] == 0) ret = 1;
+            break;
+        case TM_HOUR:
+            value[cur_val] = constrain(value[cur_val]-step,0,23);
+            if(value[cur_val] == 0) ret = 1;
+            break;
+    }
+    return ret;
+}
+
+uint8_t edit_time::set_next_digit(){
+    
+    if(cur_digit > 0) cur_digit--;
+    else{
+        //cur_fmt = ip_txt_fmt;
+        get_txt_value();
+        cur_val = 0;
+        cur_digit = time_fmt_len;
+        return 0;
+    }
+    if(conv_buf[cur_digit] == ':'){
+        cur_digit--;
+        cur_val--;
+        reset_step();
+    }
+    else set_next_step();
+    return 1;
+}
+
+/********************************************************************************/
+
+edit_date::edit_date(const char *itm_txt,uint16_t &y,uint8_t &m,uint8_t &d):edit_item(EDT_DATE){
+    value[DT_YEAR] = y;
+    value[DT_MONTH] = m;
+    value[DT_DAY] = d;
+    txt = itm_txt;
+    fmt = DT_YMD;
+    sep = DT_SEP_SLASH;
+    cur_val = DT_DAY;
+    cur_digit = date_fmt_len;
+    step = 1;
+    n_type = NMB_UCHAR;
+    edt_mode = EDT_MODE_DIGIT;
+    memset(conv_buf,0,MENU_BUF_LEN);
+    //uint8_t a = month_length(2021,2);
+}
+
+
+void  edit_date::set_fmt(uint8_t f){
+    fmt = constrain(f,0,DT_FMT_CNT);
+    switch(fmt){
+        case DT_YMD:
+            cur_val = DT_DAY;
+            break;
+        case DT_DMY:
+        case DT_MDY:    
+            cur_val = DT_YEAR;
+            break;
+    }
+    
+}
+
+
+void  edit_date::set_sep(uint8_t s){
+    sep = constrain(s,0,strlen(date_sep)-1);
+}
+
+
+const char * edit_date::get_txt_value(){
+    memset(conv_buf,0,MENU_BUF_LEN);
+    uint16_t a=0,b=0,c=0;
+    switch(fmt){
+        case DT_YMD:
+            a = value[DT_YEAR];
+            b = value[DT_MONTH];
+            c = value[DT_DAY];
+            break;
+        case DT_DMY:
+            a = value[DT_DAY];
+            b = value[DT_MONTH];
+            c = value[DT_YEAR];
+            break;
+        case DT_MDY:
+            b = value[DT_DAY];
+            a = value[DT_MONTH];
+            c = value[DT_YEAR];
+            break;
+            
+    }
+    snprintf(conv_buf,MENU_BUF_LEN,date_fmt[fmt],a,date_sep[sep],b,date_sep[sep],c);
+    return conv_buf;
+}
+
+uint8_t edit_date::set_next_digit(){
+    
+    if(cur_digit > 0) cur_digit--;
+    else{
+        //cur_fmt = ip_txt_fmt;
+        get_txt_value();
+        //cur_val = 0;
+        switch(fmt){
+            case DT_YMD:
+                cur_val = DT_DAY;
+                break;
+            case DT_DMY:
+            case DT_MDY:    
+                cur_val = DT_YEAR;
+                break;
+        }
+        
+        cur_digit = date_fmt_len;
+        return 0;
+    }
+    if(conv_buf[cur_digit] == date_sep[sep]){
+        cur_digit--;
+        //cur_val--;
+        switch(cur_val){
+            case DT_YEAR:
+                switch(fmt){
+                    case DT_DMY:
+                        cur_val = DT_MONTH;
+                        break;
+                    case DT_MDY:
+                        cur_val = DT_DAY;
+                        break;
+                }
+                break;
+            case DT_MONTH:
+                switch(fmt){
+                    case DT_YMD:
+                        cur_val = DT_YEAR;
+                        break;
+                    case DT_DMY:
+                        cur_val = DT_DAY;
+                        break;
+                }
+                break;
+            case DT_DAY:
+                cur_val = DT_MONTH;
+                break;
+        }
+        reset_step();
+    }
+    else set_next_step();
+    return 1;
+}
+
+
+uint8_t edit_date::set_next_value(){
+    uint8_t ret = 0;
+    switch(cur_val){
+        case DT_DAY:
+            value[cur_val] = constrain(value[cur_val]+step,1,month_length(value[DT_YEAR],value[DT_MONTH]));
+            if(value[cur_val] == month_length(value[DT_YEAR],value[DT_MONTH])) ret = 1;
+            break;
+        case DT_MONTH:
+            value[cur_val] = constrain(value[cur_val]+step,1,12);
+            if(value[cur_val] == 12) ret = 1;
+            break;
+        case DT_YEAR:
+            value[cur_val] = constrain(value[cur_val]+step,DT_YEAR_MIN,DT_YEAR_MAX);
+            if(value[cur_val] == DT_YEAR_MAX) ret = 1;
+            break;
+    }
+    return ret;
+}
+
+
+uint8_t edit_date::set_prev_value(){
+    uint8_t ret = 0;
+    switch(cur_val){
+        case DT_DAY:
+            value[cur_val] = constrain(value[cur_val]-step,1,month_length(value[DT_YEAR],value[DT_MONTH]));
+            if(value[cur_val] == 1) ret = 1;
+            break;
+        case DT_MONTH:
+            value[cur_val] = constrain(value[cur_val]-step,1,12);
+            if(value[cur_val] == 1) ret = 1;
+            break;
+        case DT_YEAR:
+            value[cur_val] = constrain(value[cur_val]-step,DT_YEAR_MIN,DT_YEAR_MAX);
+            if(value[cur_val] == DT_YEAR_MIN) ret = 1;
+            break;
+    }
+    return ret;
 }
 
 
@@ -293,6 +524,8 @@ uint8_t edit_menu::edit_set_next(){
         case EDT_BOOL:
         case EDT_STRING:
         case EDT_IP:
+        case EDT_TIME:
+        case EDT_DATE:
             return edit_set_next_list();
             break;
     }
@@ -308,6 +541,8 @@ uint8_t edit_menu::edit_set_prev(){
         case EDT_BOOL:
         case EDT_STRING:
         case EDT_IP:
+        case EDT_TIME:
+        case EDT_DATE:
             return edit_set_prev_list();
             break;
     }
@@ -324,6 +559,8 @@ void edit_menu::edit_current(uint8_t lmt){
         case EDT_NUMB:
         case EDT_STRING:
         case EDT_IP:
+        case EDT_TIME:
+        case EDT_DATE:
             edit_current_numb(lmt);
             break;
         case EDT_LIST:

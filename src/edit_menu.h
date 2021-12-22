@@ -3,6 +3,8 @@
 #define __EDIT_MENU_H__
 
 #include <basic_menu.h>
+#include <time.h>
+//#include <stdint.h>
 
 #ifdef ARDUINO
 #include <IPAddress.h>
@@ -10,12 +12,17 @@
 
 #define EDT_ITM_LEN 10
 
+//AVR libc++ does not have limits header, will test other platform
+//#include <limits>
+
 typedef enum{
     EDT_NUMB,
     EDT_STRING,
     EDT_BOOL,
     EDT_LIST,
     EDT_IP,
+    EDT_TIME,
+    EDT_DATE,
     EDT_NONE    // just menu item, no edit, used for exit,save,etc
 } edt_type_t;
 
@@ -33,6 +40,8 @@ typedef enum{
     NMB_CNT     //total
 } nmb_type_t;
 
+
+//AVR libc already define some macros for this, but is it portable?
 const char nmb_fmt[NMB_CNT][5] = { "%i","%u","%hi","%hu","%i","%u","%li","%lu","%.2f"/*,"%.2g"*/};
 
 //int imin = std::numeric_limits<int>::min();
@@ -56,7 +65,9 @@ class edit_item{
 public:
     uint8_t     type;       //edt_type_t
     uint8_t     n_type;     //nmb_type_t
-    void        *val_ptr;
+    
+    //void        *val_ptr;
+    
     //uint8_t     size;
     const char  *txt;
     char        conv_buf[MENU_BUF_LEN];
@@ -65,7 +76,9 @@ public:
     uint8_t     edt_mode; // 0 - by step +-  1 - by digit 2 - no edit
     
     edit_item(edt_type_t t){type=t;};
-    void *get_value_ptr(){return val_ptr;};
+    
+    //void *get_value_ptr(){return val_ptr;};
+    
     virtual uint8_t set_next_digit();
     
     void set_edit_mode(uint8_t m){edt_mode = m;};
@@ -102,6 +115,35 @@ public:
         if(min == 0 and max == 0){
             //min_val = std::numeric_limits<T>::min();
             //max_val = std::numeric_limits<T>::max();
+            switch(t){
+                case NMB_CHAR:  //int8_t
+                    min_val = INT8_MIN;
+                    max_val = INT8_MAX;
+                    break;
+                case NMB_UCHAR: //uint8_t
+                    min_val = 0;
+                    max_val = UINT8_MAX;
+                    break;
+                case NMB_S_INT:
+                case NMB_INT:   // int16_t
+                    min_val = INT16_MIN;
+                    max_val = INT16_MAX;
+                    break;
+                case NMB_S_UINT:
+                case NMB_UINT:  //uint16_t
+                    min_val = 0;
+                    max_val = UINT16_MAX;
+                    break;
+                case NMB_L_INT: //int32_t
+                    min_val = INT32_MIN;
+                    max_val = INT32_MAX;
+                    break;
+                case NMB_L_UINT: //uint32_t
+                    min_val = 0;
+                    max_val = UINT32_MAX;
+                    break;
+                    
+            }
         }
         else{
             min_val = min;
@@ -109,7 +151,7 @@ public:
         }
         step = stp;
         //size = sizeof(T);
-        val_ptr = &value;
+        //val_ptr = &value;
         n_type = t;
         txt = text;
         //T aaaa= std::numeric_limits<T>::min();
@@ -199,7 +241,7 @@ public:
     uint8_t         step;
     const char      *cur_fmt;
     
-    edit_ip(const char *itm_txt,uint8_t ip1,uint8_t ip2,uint8_t ip3,uint8_t ip4);//:edit_item(EDT_IP);
+    edit_ip(const char *itm_txt,uint8_t &ip1,uint8_t &ip2,uint8_t &ip3,uint8_t &ip4);//:edit_item(EDT_IP);
 #ifdef ARDUINO
     edit_ip(const char *itm_txt,IPAddress ip):edit_item(EDT_IP){};
     edit_ip(const char *itm_txt,IPAddress *ip):edit_item(EDT_IP){};
@@ -212,6 +254,91 @@ public:
     void        set_prev_step(){step /=10;};
     void        reset_step(){step = 1;cur_fmt = ip_edt_fmt;};
     uint8_t     set_next_digit();
+    
+};
+
+
+typedef enum{
+    TM_HOUR,
+    TM_MIN,
+    TM_SEC
+} tm_ndx_t;
+
+
+const char  time_fmt[] = "%02u:%02u:%02u";
+const uint8_t time_fmt_len = 7;
+
+class edit_time:public edit_item{
+public:
+    uint8_t     value[3];
+    uint8_t     cur_val;
+    uint8_t     step;
+    
+    edit_time(const char *itm_txt,uint8_t &h,uint8_t &m,uint8_t &s);
+
+    const char  *get_txt_value();
+    uint8_t     set_next_value();
+    uint8_t     set_prev_value();
+    void        set_next_step(){step *=10;};
+    void        set_prev_step(){step /=10;};
+    void        reset_step(){step = 1;};
+    uint8_t     set_next_digit();
+    
+};
+
+
+typedef enum{
+    DT_YEAR,
+    DT_MONTH,
+    DT_DAY
+} dt_ndx_t;
+
+typedef enum{
+    DT_YMD,
+    DT_DMY,
+    DT_MDY,
+    DT_FMT_CNT
+} dt_fmt_t;
+
+typedef enum{
+    DT_SEP_SLASH,
+    DT_SEP_BSLASH,
+    DT_SEP_MINUS,
+    DT_SEP_COLON,
+    DT_SEP_CNT
+} dt_sep_t;
+
+const char date_sep[] = "/\\-;:";
+
+
+const uint8_t date_fmt_len = 9;
+const char  date_fmt[][16] = {"%4u%c%02u%c%02u",
+                              "%02u%c%02u%c%4u",
+                              "%02u%c%02u%c%4u"
+};
+
+#define DT_YEAR_MIN     1900
+#define DT_YEAR_MAX     2999
+
+class edit_date:public edit_item{
+public:
+    uint16_t    value[3];
+    uint8_t     cur_val;
+    uint8_t     step;
+    uint8_t     fmt;
+    uint8_t     sep;
+    
+    edit_date(const char *itm_txt,uint16_t &y,uint8_t &m,uint8_t &d);
+
+    const char  *get_txt_value();
+    uint8_t     set_next_value();
+    uint8_t     set_prev_value();
+    void        set_next_step(){step *=10;};
+    void        set_prev_step(){step /=10;};
+    void        reset_step(){step = 1;};
+    uint8_t     set_next_digit();
+    void        set_fmt(uint8_t f);
+    void        set_sep(uint8_t s);
     
 };
 
@@ -241,53 +368,18 @@ public:
     
 };
 
-/*
-class edit_list:public edit_item{
-public:
-    basic_menu    *mnu;
-    
-    edit_list(const char *text,const char *base,uint8_t cnt,uint8_t item_l):edit_item(EDT_LIST){
-        mnu = new basic_menu(nullptr,base,cnt,item_l,1);
-        txt = text;
-        edt_mode = EDT_MODE_STEP;
-    };
-    ~edit_list(){delete mnu;};
-    
-    uint8_t set_next_value(){
-        mnu->move_prev();
-        return 0;
-    }
-
-    uint8_t set_prev_value(){
-        mnu->move_next();
-        return 0;
-    }
-    
-    const char *get_txt_value(){
-        //return mnu->get_row(mnu->cur_item);
-        return mnu->get_row(0);
-    }
-    
-};
-*/
 
 
 class edit_list:public edit_item,public basic_menu{
 public:
-    //basic_menu    *mnu;
     
     edit_list(const char *text,const char *base,uint8_t cnt,uint8_t item_l):edit_item(EDT_LIST){
-        //mnu = new basic_menu(nullptr,base,cnt,item_l,1);
         txt = text;
         edt_mode = EDT_MODE_STEP;
         set_items(base,cnt,item_l);
-        //items.base = base;
-        //items.cnt = cnt;
-        //items.len = item_l;
         disp_rows = 1;
         device = nullptr;
     };
-    //~edit_list(){delete mnu;};
     
     uint8_t set_next_value(){
         move_prev();
@@ -300,8 +392,6 @@ public:
     }
     
     const char *get_txt_value(){
-        //return mnu->get_row(mnu->cur_item);
-        //return get_row(0);
         return items[cur_item];
     }
     
