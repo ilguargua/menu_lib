@@ -4,7 +4,7 @@
 
 #include <basic_menu.h>
 #include <time.h>
-//#include <stdint.h>
+
 
 #ifdef ARDUINO
 #include <IPAddress.h>
@@ -12,7 +12,7 @@
 
 #define EDT_ITM_LEN 10
 
-//AVR libc++ does not have limits header, will test other platform
+//AVR libc++ does not have <limits> header, will test other platform
 //#include <limits>
 
 typedef enum{
@@ -66,9 +66,6 @@ public:
     uint8_t     type;       //edt_type_t
     uint8_t     n_type;     //nmb_type_t
     
-    //void        *val_ptr;
-    
-    //uint8_t     size;
     const char  *txt;
     char        conv_buf[MENU_BUF_LEN];
     uint8_t     cur_digit;
@@ -77,7 +74,6 @@ public:
     
     edit_item(edt_type_t t){type=t;};
     
-    //void *get_value_ptr(){return val_ptr;};
     
     virtual uint8_t set_next_digit();
     
@@ -88,12 +84,6 @@ public:
     virtual void set_prev_step(){};
     virtual void reset_step(){};
     virtual const char *get_txt_value(){return nullptr;};
-    virtual uint8_t get_value(uint8_t d=0){return 0;};
-    virtual uint16_t get_value(uint16_t d=0){return 0;};
-    virtual uint32_t get_value(uint32_t d=0){return 0;};
-    virtual int8_t get_value(int8_t d=0){return 0;};
-    
-    virtual float get_value(float d=0.0){return 0.0;};
 private:
     uint8_t set_next_digit_numb();
     uint8_t set_next_char();
@@ -228,7 +218,7 @@ public:
 
 
 
-const char      ip_txt_fmt[] = "% 3u:% 3u:% 3u:% 3u";
+const char      ip_txt_fmt[] = "%3u:%3u:%3u:%3u";
 const char      ip_edt_fmt[] = "%03u:%03u:%03u:%03u";
 const uint8_t   ip_fmt_len = 14;
 

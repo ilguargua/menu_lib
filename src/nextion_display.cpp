@@ -3,16 +3,33 @@
 #ifdef EN_M_NEXTION
 
 
+nextion_display::nextion_display(){
+    ser = nullptr;
+    rows = 0;
+    cols = 0;
+    row_h = 0;
+    col_l = 0;
+    font = 0;
+    d_cols = 0;
+    d_rows = 0;
+    
+}
 
 nextion_display::nextion_display(Stream *disp,uint8_t r,uint8_t c,uint8_t f_ndx,uint8_t f_h,uint8_t f_l){
+    init(disp,r,c,f_ndx,f_h,f_l);
+}
+
+void nextion_display::init(Stream *disp,uint8_t r,uint8_t c,uint8_t f_ndx,uint8_t f_h,uint8_t f_w){
     ser = disp;
     rows = r;
     cols = c;
     row_h = f_h;
-    col_l = f_l;
+    col_l = f_w;
     font = f_ndx;
-    d_cols = get_nextion_data('w')/f_l;
+    d_cols = get_nextion_data('w')/f_w;
     d_rows = get_nextion_data('h')/f_h;
+    
+    
     if(rows > d_rows) rows = d_rows;
     if(cols > d_cols) cols = d_cols;
     if(d_rows > rows){
@@ -20,12 +37,11 @@ nextion_display::nextion_display(Stream *disp,uint8_t r,uint8_t c,uint8_t f_ndx,
     }
     else menu_y = 1;
     if(d_cols > cols){
-        menu_x = (((d_cols-cols)/2)*f_l)+1;
+        menu_x = (((d_cols-cols)/2)*f_w)+1;
     }
     else menu_x = 1;
-    //memset(conv_buf,0,MENU_BUF_LEN);
+    
 
-        //get_display_data();
 };
 
 void nextion_display::print(uint8_t row,uint8_t col,const char *txt,uint8_t rev){
@@ -33,8 +49,12 @@ void nextion_display::print(uint8_t row,uint8_t col,const char *txt,uint8_t rev)
     uint16_t bg = rev == 0 ? NXT_BG_COLOR : NXT_FG_COLOR;
     memset(conv_buf,0,MENU_BUF_LEN);
     snprintf(conv_buf,MENU_BUF_LEN-1,XSTR_FMT,
+            /* 
             menu_x+(row*col_l),
             menu_y+(col*row_h),
+            */
+            menu_x+(col*col_l)+2,
+            menu_y+(row*row_h)+2,
             strlen(txt)*col_l,
             row_h,
             font,
@@ -52,12 +72,14 @@ void nextion_display::clear_row(uint8_t row,uint8_t col, uint8_t w,uint8_t rev){
     if(w == 0) w = cols - col ; //default to end of line
     memset(conv_buf,0,MENU_BUF_LEN);
     snprintf(conv_buf,MENU_BUF_LEN-1,FILL_FMT,
-            menu_x+(row*col_l),
-            menu_y+(col*row_h),
+            menu_x+(row*col_l)+2,
+            menu_y+(col*row_h)+2,
             w*col_l,
             row_h,
-            fc
+            fc,
+            NXT_MSG_END
             );
+    ser->print(conv_buf);
 }
 
 
@@ -103,7 +125,7 @@ uint16_t nextion_display::get_nextion_data(char d){
             cnt++;
         }
     }
-    if(strlen(conv_buf) == 8 and conv_buf[0] == 0x71)return conv_buf[1]+(conv_buf[2]*256);
+    if(conv_buf[0] == 0x71)return (uint16_t)((uint8_t)conv_buf[1]+((uint8_t)conv_buf[2]*256));
     return 0;
 }
 
