@@ -19,14 +19,20 @@ typedef enum {
 } nextionColor_t; 
 
 #define NXT_MSG_END         0xFF,0xFF,0xFF 
-#define NXT_FG_COLOR        NXT_WHITE
-#define NXT_BG_COLOR        NXT_BLACK
+#define NXT_FG_COLOR        NXT_RED
+#define NXT_BG_COLOR        NXT_BLUE
+
+//Nextion need a bigger buffer size 
+//so this intf define his own buffer
+#define NXT_BUF_SIZE        60
 
 #define FILL_FMT            "fill %u,%u,%u,%u,%u%c%c%c"
 #define XSTR_FMT            "xstr %u,%u,%u,%u,%u,%u,%u,0,1,1,\"%s\"%c%c%c"
 #define DRAW_FMT            "draw %u,%u,%u,%u,%u%c%c%c"
 #define REF_FMT             "ref 0%c%c%c"
 #define GET_FMT             "get p[0].b[0].%c%c%c%c"
+#define TOFF_FMT            "tsw 255,0%c%c%c"
+#define TON_FMT             "tsw 255,1%c%c%c"
 
 class nextion_display:public text_display{
 public:
@@ -39,6 +45,7 @@ public:
     uint8_t row_h;
     uint8_t col_l;
     uint8_t font;
+    char    nxt_buf[NXT_BUF_SIZE];
     
     nextion_display();
     nextion_display(Stream *disp,uint8_t r,uint8_t c,uint8_t f_ndx,uint8_t f_h,uint8_t f_l);

@@ -39,7 +39,7 @@
 
 //This is the len of memory buffer used by text_display and edit_item classes
 //Should be long at least as the numb. of char of display+1
-#define MENU_BUF_LEN 60
+#define MENU_BUF_LEN 22
 
 
 
@@ -133,7 +133,7 @@ public:
 class basic_menu{
 public:
     
-    text_display     *device;
+    text_display    *device;
     uint8_t         cur_item;
     uint8_t         start_item;
     

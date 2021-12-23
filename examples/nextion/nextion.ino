@@ -37,7 +37,7 @@ void setup(){
     pinMode(MNU_PB_DN,INPUT);
     pinMode(MNU_PB_CH,INPUT);
     
-    disp.init(&intf,5,16,0,18,8);
+    disp.init(&intf,5,16,0,14,8);
     Serial.print("conv_buf : ");
     for(uint8_t i=0;i<10;i++){
         Serial.print((uint8_t)disp.conv_buf[i],HEX);
@@ -72,11 +72,12 @@ void setup(){
     
     bm.set_device(&disp);
     bm.set_items(mm_items[0],mm_items_cnt,mm_items_len);
-    bm.set_options(M_NO_ROLLOVER | M_PRINT_CLEAR);
-    bm.set_rows(4);
+    bm.set_options(M_PRINT_CLEAR);
+    bm.set_rows(5);
     
     bm.draw_menu();
-    disp.clear_row(0,0);
+    //delay(2000);
+    //disp.clear_row(4,0);
     Serial.print("conv_buf : ");
     Serial.println(disp.conv_buf);
     Serial.print("menu_x : ");
@@ -106,12 +107,31 @@ void loop(){
         case M_PB_DN:
             bm.move_next();
             break;
-        
+        case M_PB_CH:
+            disp.restore_display();
+            break;
     }
 }
 
 
 int chk_pb(){
+    char b = 0;
+    if(Serial.available()){
+        b = Serial.read();
+        switch(b){
+            case 'u':
+                return M_PB_UP;
+                break;
+            case 'd':
+                return M_PB_DN;
+                break;
+            case 'c':
+                return M_PB_CH;
+                break;
+        }
+        while(Serial.available()) Serial.read();
+    }
+    return M_PB_NONE;
     if(digitalRead(MNU_PB_UP) == LOW){
         while(digitalRead(MNU_PB_UP) == LOW){}
         return M_PB_UP;
