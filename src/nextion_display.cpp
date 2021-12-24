@@ -48,7 +48,11 @@ void nextion_display::print(uint8_t row,uint8_t col,const char *txt,uint8_t rev)
     uint16_t fg = rev > 0 ? NXT_BG_COLOR : NXT_FG_COLOR;
     uint16_t bg = rev == 0 ? NXT_BG_COLOR : NXT_FG_COLOR;
     memset(nxt_buf,0,NXT_BUF_SIZE);
+#if defined(ARDUINO_ARCH_AVR)    
+    snprintf_P(nxt_buf,NXT_BUF_SIZE-1,XSTR_FMT,
+#else
     snprintf(nxt_buf,NXT_BUF_SIZE-1,XSTR_FMT,
+#endif             
             /* 
             menu_x+(row*col_l),
             menu_y+(col*row_h),
@@ -71,7 +75,11 @@ void nextion_display::clear_row(uint8_t row,uint8_t col, uint8_t w,uint8_t rev){
     uint16_t fc = rev == 0 ? NXT_BG_COLOR : NXT_FG_COLOR;
     if(w == 0) w = cols - col ; //default to end of line
     memset(nxt_buf,0,NXT_BUF_SIZE);
+#if defined(ARDUINO_ARCH_AVR)        
+    snprintf_P(nxt_buf,NXT_BUF_SIZE-1,FILL_FMT,
+#else
     snprintf(nxt_buf,NXT_BUF_SIZE-1,FILL_FMT,
+#endif             
             /* 
             menu_x+(row*col_l)+2,
             menu_y+(col*row_h)+2,
@@ -89,10 +97,18 @@ void nextion_display::clear_row(uint8_t row,uint8_t col, uint8_t w,uint8_t rev){
 
 void nextion_display::clear_display(){
     memset(nxt_buf,0,NXT_BUF_SIZE);
+#if defined(ARDUINO_ARCH_AVR)            
+    snprintf_P(nxt_buf,NXT_BUF_SIZE-1,TOFF_FMT,NXT_MSG_END);
+#else
     snprintf(nxt_buf,NXT_BUF_SIZE-1,TOFF_FMT,NXT_MSG_END);
+#endif    
     ser->print(nxt_buf);
     memset(nxt_buf,0,NXT_BUF_SIZE);
+#if defined(ARDUINO_ARCH_AVR)    
+    snprintf_P(nxt_buf,NXT_BUF_SIZE-1,FILL_FMT,
+#else
     snprintf(nxt_buf,NXT_BUF_SIZE-1,FILL_FMT,
+#endif             
             menu_x - 4,
             menu_y - 4,
             (cols * col_l)+8,
@@ -102,7 +118,11 @@ void nextion_display::clear_display(){
             );
     ser->print(nxt_buf);
     memset(nxt_buf,0,NXT_BUF_SIZE);
+#if defined(ARDUINO_ARCH_AVR)    
+    snprintf_P(nxt_buf,NXT_BUF_SIZE-1,DRAW_FMT,
+#else
     snprintf(nxt_buf,NXT_BUF_SIZE-1,DRAW_FMT,
+#endif             
             menu_x-2 ,
             menu_y-2 ,
             menu_x+(cols * col_l)+2,
@@ -139,10 +159,18 @@ uint16_t nextion_display::get_nextion_data(char d){
 
 void nextion_display::restore_display(){
     memset(nxt_buf,0,NXT_BUF_SIZE);
+#if defined(ARDUINO_ARCH_AVR)    
+    snprintf_P(nxt_buf,NXT_BUF_SIZE-1,REF_FMT,NXT_MSG_END);
+#else
     snprintf(nxt_buf,NXT_BUF_SIZE-1,REF_FMT,NXT_MSG_END);
+#endif    
     ser->print(nxt_buf);
     memset(nxt_buf,0,NXT_BUF_SIZE);
+#if defined(ARDUINO_ARCH_AVR)    
+    snprintf_P(nxt_buf,NXT_BUF_SIZE-1,TON_FMT,NXT_MSG_END);
+#else
     snprintf(nxt_buf,NXT_BUF_SIZE-1,TON_FMT,NXT_MSG_END);
+#endif    
     ser->print(nxt_buf);
     
 }

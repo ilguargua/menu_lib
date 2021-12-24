@@ -26,6 +26,18 @@ typedef enum {
 //so this intf define his own buffer
 #define NXT_BUF_SIZE        60
 
+#if defined(ARDUINO_ARCH_AVR)
+
+#define FILL_FMT            PSTR("fill %u,%u,%u,%u,%u%c%c%c")
+#define XSTR_FMT            PSTR("xstr %u,%u,%u,%u,%u,%u,%u,0,1,1,\"%s\"%c%c%c")
+#define DRAW_FMT            PSTR("draw %u,%u,%u,%u,%u%c%c%c")
+#define REF_FMT             PSTR("ref 0%c%c%c")
+#define GET_FMT             PSTR("get p[0].b[0].%c%c%c%c")
+#define TOFF_FMT            PSTR("tsw 255,0%c%c%c")
+#define TON_FMT             PSTR("tsw 255,1%c%c%c")
+
+#else
+
 #define FILL_FMT            "fill %u,%u,%u,%u,%u%c%c%c"
 #define XSTR_FMT            "xstr %u,%u,%u,%u,%u,%u,%u,0,1,1,\"%s\"%c%c%c"
 #define DRAW_FMT            "draw %u,%u,%u,%u,%u%c%c%c"
@@ -33,6 +45,8 @@ typedef enum {
 #define GET_FMT             "get p[0].b[0].%c%c%c%c"
 #define TOFF_FMT            "tsw 255,0%c%c%c"
 #define TON_FMT             "tsw 255,1%c%c%c"
+
+#endif
 
 class nextion_display:public text_display{
 public:
