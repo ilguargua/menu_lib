@@ -21,26 +21,54 @@ SoftwareSerial intf(10,11);  //we use software serial for display, so Serial can
 basic_menu bm;
 nextion_display disp;
 
+const PROGMEM char pm_str[][4] = {"uno","due","tre","sei"};
+
+
+typedef struct{
+    PGM_P      base;
+    uint8_t         cnt;
+    uint8_t         len;
+    PGM_P operator[](int8_t i){
+        i=constrain(i,0,cnt-1);
+        if(base != nullptr) return base + (len * i);
+        else return nullptr;
+    };
+} pgm_arr_t;
+
+
+pgm_arr_t pg;
 
 void setup(){
     char buf[60];
     memset(buf,0,40);
     intf.begin(38400);  //This have to match the nextion baudrate
     
+    pg.base = pm_str[0];
+    pg.cnt = 4;
+    pg.len = 4;
+    
+    
+    
     //nextion_display disp(&intf,5,16,0,18,10);
     //basic_menu bm;
     Serial.begin(115200);
     Serial.println("Program begin..");
     delay(500);
+    
+    //sprintf(buf,"%S",pg[2]);
+    strcpy_P(buf,pg[1]);
+    Serial.println(buf);
+    
+    memset(buf,0,40);
     //set input buttons
     pinMode(MNU_PB_UP,INPUT);
     pinMode(MNU_PB_DN,INPUT);
     pinMode(MNU_PB_CH,INPUT);
     
     disp.init(&intf,5,16,0,14,8);
-    Serial.print("conv_buf : ");
+    Serial.print("nxt_buf : ");
     for(uint8_t i=0;i<10;i++){
-        Serial.print((uint8_t)disp.conv_buf[i],HEX);
+        Serial.print((uint8_t)disp.nxt_buf[i],HEX);
         Serial.print(" ");
     }
     Serial.println();
@@ -52,6 +80,7 @@ void setup(){
     snprintf(buf,40,"b[3].val=50%c%c%c",NXT_MSG_END);
     intf.print(buf);
     
+    //while(1){};
     Serial.print("d_rows : ");
     Serial.println(disp.d_rows);
     Serial.print("d_cols : ");

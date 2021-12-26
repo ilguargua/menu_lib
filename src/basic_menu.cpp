@@ -20,7 +20,11 @@ basic_menu::basic_menu(){
     disp_rows = 0;
 }
 
+#if defined(ARDUINO_ARCH_AVR)
 basic_menu::basic_menu(const char *base,uint8_t cnt,uint8_t item_l,uint8_t d_rows){
+#else
+basic_menu::basic_menu(PGM_P base,uint8_t cnt,uint8_t item_l,uint8_t d_rows){
+#endif
     device = nullptr;
     /*
     items.base = base;
@@ -35,7 +39,11 @@ basic_menu::basic_menu(const char *base,uint8_t cnt,uint8_t item_l,uint8_t d_row
 
 }
 
+#if defined(ARDUINO_ARCH_AVR)
+basic_menu::basic_menu(text_display *dev,PGM_P base,uint8_t cnt,uint8_t item_l,uint8_t d_rows){
+#else
 basic_menu::basic_menu(text_display *dev,const char *base,uint8_t cnt,uint8_t item_l,uint8_t d_rows){
+#endif
     device = dev;
     set_items(base,cnt,item_l);
     /*
@@ -124,7 +132,11 @@ text_display *basic_menu::new_device(uint8_t dev_type,void *dev){
     return nullptr;
 }
 
+#if defined(ARDUINO_ARCH_AVR)
+void basic_menu::set_items(PGM_P base,uint8_t cnt,uint8_t item_l){
+#else
 void basic_menu::set_items(const char *base,uint8_t cnt,uint8_t item_l){
+#endif
     items.base = base;
     items.cnt = cnt;
     items.len = item_l+1;
@@ -177,8 +189,11 @@ void basic_menu::move_prev(){
     draw_menu();
 }
 
-
-const char *basic_menu::get_row(uint8_t row){
+#if defined(ARDUINO_ARCH_AVR)
+PGM_P basic_menu::get_row(uint8_t row){
+#else
+const char *basic_menu::get_row(uint8_t row){    
+#endif
     //if(row > this->item_cnt-1) row = this->item_cnt - 1;
     uint8_t r = constrain(row+start_item,0,items.cnt-1);
     return items[r];//base_addr+(this->item_len * (row+this->start_item));
@@ -205,24 +220,26 @@ void basic_menu::draw_menu(){
     uint8_t rev = 0;
     uint8_t r_cnt = min(items.cnt,disp_rows);//device->rows);
     uint8_t start = 0;
-    const char *itm;
-    //char buf[30];
+#if defined(ARDUINO_ARCH_AVR)    
+    char buf[MENU_BUF_LEN];
+#endif    
     if(device == nullptr) return;
     if(options & M_DRAW_CLEAR)device->clear_display();
     if(title != nullptr){
         device->print(0,(device->cols-strlen(title))/2,title);
         start = 1;
     }
-    //if(this->disp_rows == 0 or this->disp_cols == 0) return;
-    
     for(uint8_t i = start;i<r_cnt+start;i++){
         if(i == get_cur_row()+start) rev = 1;
         else rev = 0;
-        itm = get_row(i-start);
-        //sprintf(buf,"%i%s",rev,get_row(i-start));
         if(options | M_PRINT_CLEAR) device->clear_row(i,0);//,strlen(itm));//items.len);
+#if defined(ARDUINO_ARCH_AVR)
+        memset(buf,0,MENU_BUF_LEN);
+        strlcpy_P(buf,get_row(i-start),MENU_BUF_LEN);
+        device->print(i,0,buf,rev);
+#else
         device->print(i,0,get_row(i-start),rev);
-        //device->print(i,0,buf,rev);
+#endif
     }
     device->refresh();
 }

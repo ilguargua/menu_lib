@@ -53,10 +53,6 @@ void nextion_display::print(uint8_t row,uint8_t col,const char *txt,uint8_t rev)
 #else
     snprintf(nxt_buf,NXT_BUF_SIZE-1,XSTR_FMT,
 #endif             
-            /* 
-            menu_x+(row*col_l),
-            menu_y+(col*row_h),
-            */
             menu_x+(col*col_l)+2,
             menu_y+(row*row_h)+2,
             strlen(txt)*col_l,
@@ -80,10 +76,6 @@ void nextion_display::clear_row(uint8_t row,uint8_t col, uint8_t w,uint8_t rev){
 #else
     snprintf(nxt_buf,NXT_BUF_SIZE-1,FILL_FMT,
 #endif             
-            /* 
-            menu_x+(row*col_l)+2,
-            menu_y+(col*row_h)+2,
-            */
             menu_x+(col*col_l)+2,
             menu_y+(row*row_h)+2,
             (w*col_l)-4,
@@ -142,7 +134,11 @@ uint16_t nextion_display::get_nextion_data(char d){
     //empty serial buffer in case there is some previous data
     //WARNING thi may lost some data your progr is expecting
     while(ser->available()) ser->read();
+#if defined(ARDUINO_ARCH_AVR)
+    snprintf_P(nxt_buf,NXT_BUF_SIZE-1,GET_FMT,d,NXT_MSG_END);
+#else
     snprintf(nxt_buf,NXT_BUF_SIZE-1,GET_FMT,d,NXT_MSG_END);
+#endif
     ser->print(nxt_buf);
     memset(nxt_buf,0,NXT_BUF_SIZE);
     delay(5);

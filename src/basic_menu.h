@@ -43,11 +43,6 @@
 
 
 
-//#warning menu_buf_len not defined! use default (30)
-//#else
-//#define MENU_BUF_LEN M_BF_LEN
-//#endif
-
 
 #ifdef ARDUINO
 #include <Arduino.h>
@@ -82,6 +77,19 @@ typedef enum{
     M_NEXTION   //7 - Nextion
 } m_intf_t;
 
+
+#if defined(ARDUINO_ARCH_AVR)
+typedef struct{
+    PGM_P           base;
+    uint8_t         cnt;
+    uint8_t         len;
+    PGM_P operator[](int8_t i){
+        i=constrain(i,0,cnt-1);
+        if(base != nullptr) return base + (len * i);
+        else return nullptr;
+    };
+} ch_arr_t;
+#else
 typedef struct{
     const char      *base;
     uint8_t         cnt;
@@ -92,7 +100,7 @@ typedef struct{
         else return nullptr;
     };
 } ch_arr_t;
-
+#endif
 
 typedef enum{
     M_NEW_DEV     = 1,
@@ -144,13 +152,20 @@ public:
     
     basic_menu();
     basic_menu(uint8_t dev_type,void *dev); //create text_display instance with new
+#if defined(ARDUINO_ARCH_AVR)    
+    basic_menu(PGM_P base,uint8_t cnt,uint8_t item_l,uint8_t d_rows); //device = nullptr
+    basic_menu(text_display *dev,PGM_P base,uint8_t cnt,uint8_t item_l,uint8_t d_rows = 0);//use dev
+    virtual PGM_P   get_row(uint8_t row);
+    void            set_items(PGM_P base,uint8_t cnt,uint8_t item_l);
+#else
     basic_menu(const char *base,uint8_t cnt,uint8_t item_l,uint8_t d_rows); //device = nullptr
     basic_menu(text_display *dev,const char *base,uint8_t cnt,uint8_t item_l,uint8_t d_rows = 0);//use dev
-    ~basic_menu(){if(options & M_NEW_DEV) delete device;};
     virtual const char      *get_row(uint8_t row);
+    void            set_items(const char *base,uint8_t cnt,uint8_t item_l);
+#endif    
     void            set_device(text_display *dev);
     void            set_device(uint8_t dev_type,void *dev);
-    void            set_items(const char *base,uint8_t cnt,uint8_t item_l);
+    
     uint8_t         get_cur_row();
     void            move_next();
     void            move_prev();
@@ -159,7 +174,7 @@ public:
     void            draw_menu();
     void            set_rows(uint8_t r){disp_rows=r;};
     text_display    *new_device(uint8_t dev_type,void *dev);
-    
+    ~basic_menu(){if(options & M_NEW_DEV) delete device;};
 };
 
 

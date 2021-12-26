@@ -27,7 +27,11 @@ typedef enum{
 
 const uint8_t mm_items_cnt = 6;
 const uint8_t mm_items_len =15;
+#if defined(ARDUINO_ARCH_AVR)
+const PROGMEM char mm_items[][mm_items_len+1]={// 1234567890123456
+#else
 const char mm_items[][mm_items_len+1]={// 1234567890123456
+#endif
                                          "Item 1",
                                          "Item two",
                                          "Third item",
