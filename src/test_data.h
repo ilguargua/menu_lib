@@ -25,13 +25,14 @@ typedef enum{
 } m_pb_stat_t;
 
 
+
 const uint8_t mm_items_cnt = 6;
 const uint8_t mm_items_len =15;
 #if defined(ARDUINO_ARCH_AVR)
-const PROGMEM char mm_items[][mm_items_len+1]={// 1234567890123456
+const PROGMEM char mm_items[][mm_items_len+1] = {
 #else
 const char mm_items[][mm_items_len+1]={// 1234567890123456
-#endif
+#endif    
                                          "Item 1",
                                          "Item two",
                                          "Third item",
@@ -39,7 +40,39 @@ const char mm_items[][mm_items_len+1]={// 1234567890123456
                                          "Item five",
                                          "Sixth item"};
 
+
                                          
                                          
 
+const uint8_t s1_cnt = 6;
+const uint8_t s1_len =15;
+#if defined(ARDUINO_ARCH_AVR)
+const PROGMEM char s1_items[][s1_len+1]={// 1234567890123456
+#else
+const char s1_items[][s1_len+1]={//  1234567890123456
+#endif
+                                    "sub1-Item 1",
+                                    "sub1-Item two",
+                                    "sub1-Third item",
+                                    "sub1-Item 4",
+                                    "sub1-Item five",
+                                    "sub1-back <-"};
+
+
+const uint8_t s2_cnt = 6;
+const uint8_t s2_len =15;
+#if defined(ARDUINO_ARCH_AVR)
+const PROGMEM char s2_items[][s2_len+1]={// 1234567890123456
+#else
+const char s2_items[][s2_len+1]={//  1234567890123456
+#endif
+                                    "sub2-Item 1",
+                                    "sub2-Item two",
+                                    "sub2-Third item",
+                                    "sub2-Item 4",
+                                    "sub2-Item five",
+                                    "sub2-back <-"};
+
+
+                                    
 #endif

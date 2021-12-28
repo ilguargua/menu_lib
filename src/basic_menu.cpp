@@ -5,11 +5,6 @@
 #include <u8x8_display.h>
 #endif
 
-/*
-#include <iostream> 
-#include <cstring>
-using namespace std;
-*/
 
 
 basic_menu::basic_menu(){
@@ -18,47 +13,36 @@ basic_menu::basic_menu(){
     items.cnt = 0;
     items.len = 0;
     disp_rows = 0;
+    title = nullptr;
 }
 
-#if defined(ARDUINO_ARCH_AVR)
-basic_menu::basic_menu(const char *base,uint8_t cnt,uint8_t item_l,uint8_t d_rows){
-#else
-basic_menu::basic_menu(PGM_P base,uint8_t cnt,uint8_t item_l,uint8_t d_rows){
-#endif
+//#if defined(ARDUINO_ARCH_AVR)
+basic_menu::basic_menu(const char *base,uint8_t cnt,uint8_t item_l,uint8_t d_rows)
+//#else
+//basic_menu::basic_menu(PGM_P base,uint8_t cnt,uint8_t item_l,uint8_t d_rows)
+//#endif
+    {
     device = nullptr;
-    /*
-    items.base = base;
-    items.cnt = cnt;
-    items.len = item_l+1;
-    */
     set_items(base,cnt,item_l);
     disp_rows = d_rows;
-    //cur_item = 0;
-    //start_item = 0;
-    //title = nullptr;
-
+    title = nullptr;
 }
 
-#if defined(ARDUINO_ARCH_AVR)
-basic_menu::basic_menu(text_display *dev,PGM_P base,uint8_t cnt,uint8_t item_l,uint8_t d_rows){
-#else
-basic_menu::basic_menu(text_display *dev,const char *base,uint8_t cnt,uint8_t item_l,uint8_t d_rows){
-#endif
+//#if defined(ARDUINO_ARCH_AVR)
+//basic_menu::basic_menu(text_display *dev,PGM_P base,uint8_t cnt,uint8_t item_l,uint8_t d_rows)
+//#else
+basic_menu::basic_menu(text_display *dev,const char *base,uint8_t cnt,uint8_t item_l,uint8_t d_rows)
+//#endif
+    {
     device = dev;
     set_items(base,cnt,item_l);
-    /*
-    items.base = base;
-    items.cnt = cnt;
-    items.len = item_l+1;
-    */
     disp_rows = d_rows;
-    //cur_item = 0;
-    //start_item = 0;
-    //title = nullptr;
+    title = nullptr;
     if(disp_rows == 0 and dev != nullptr) disp_rows = device->rows;
-    //if(dev == nullptr) device = new text_display();
+    
 }
 
+/*
 basic_menu::basic_menu(uint8_t dev_type,void *dev){
     device = new_device(dev_type,dev);
     if(device != nullptr){
@@ -73,6 +57,7 @@ basic_menu::basic_menu(uint8_t dev_type,void *dev){
     items.cnt = 0;
     items.len = 0;
 }
+*/
 
 void basic_menu::set_device(text_display *dev){
     device = dev;
@@ -83,7 +68,7 @@ void basic_menu::set_device(text_display *dev){
     
 }
 
-
+/*
 void basic_menu::set_device(uint8_t dev_type,void *dev){
     device = new_device(dev_type,dev);
     if(device != nullptr){
@@ -92,6 +77,7 @@ void basic_menu::set_device(uint8_t dev_type,void *dev){
         if(options & M_NEW_DEV == 0)options |= M_NEW_DEV;
     }
 }
+
 
 
 text_display *basic_menu::new_device(uint8_t dev_type,void *dev){
@@ -118,7 +104,7 @@ text_display *basic_menu::new_device(uint8_t dev_type,void *dev){
             return new text_display();
 #endif            
             break;
-        /*    
+            
         case M_LQ:
 #ifdef EN_M_LQ
             return new lq_display((LiquidCrystal *)dev); 
@@ -126,23 +112,24 @@ text_display *basic_menu::new_device(uint8_t dev_type,void *dev){
             return new text_display();
 #endif            
             break;
-       */
+       
         
     }
     return nullptr;
 }
+*/
 
-#if defined(ARDUINO_ARCH_AVR)
-void basic_menu::set_items(PGM_P base,uint8_t cnt,uint8_t item_l){
-#else
-void basic_menu::set_items(const char *base,uint8_t cnt,uint8_t item_l){
-#endif
+//#if defined(ARDUINO_ARCH_AVR)
+//void basic_menu::set_items(PGM_P base,uint8_t cnt,uint8_t item_l)
+//#else
+void basic_menu::set_items(const char *base,uint8_t cnt,uint8_t item_l)
+//#endif
+{
     items.base = base;
     items.cnt = cnt;
     items.len = item_l+1;
     cur_item = 0;
     start_item = 0;
-    //title = nullptr;
 }
 
 void basic_menu::move_next(){
@@ -189,11 +176,12 @@ void basic_menu::move_prev(){
     draw_menu();
 }
 
-#if defined(ARDUINO_ARCH_AVR)
-PGM_P basic_menu::get_row(uint8_t row){
-#else
-const char *basic_menu::get_row(uint8_t row){    
-#endif
+//#if defined(ARDUINO_ARCH_AVR)
+//PGM_P basic_menu::get_row(uint8_t row)
+//#else
+const char *basic_menu::get_row(uint8_t row)
+//#endif
+{
     //if(row > this->item_cnt-1) row = this->item_cnt - 1;
     uint8_t r = constrain(row+start_item,0,items.cnt-1);
     return items[r];//base_addr+(this->item_len * (row+this->start_item));
@@ -204,12 +192,18 @@ uint8_t basic_menu::get_cur_row(){
     return cur_item - start_item;
 }
 
+#if defined(ARDUINO_ARCH_AVR)
+void basic_menu::set_title(const __FlashStringHelper *tit){
+#else
 void basic_menu::set_title(const char *tit){
+#endif
     uint8_t i = 1;
     if(title != nullptr) i = 0;
     title = tit;
-    if(disp_rows > 0) disp_rows -= i;
+    if(disp_rows > 0 and title != nullptr) disp_rows -= i;
+    if(i==0 and title==nullptr) disp_rows +=1;
 }
+
 
 void basic_menu::set_options(uint8_t opts, uint8_t set){
     if(set > 0) options |= opts;
@@ -220,13 +214,17 @@ void basic_menu::draw_menu(){
     uint8_t rev = 0;
     uint8_t r_cnt = min(items.cnt,disp_rows);//device->rows);
     uint8_t start = 0;
-#if defined(ARDUINO_ARCH_AVR)    
-    char buf[MENU_BUF_LEN];
-#endif    
+    
     if(device == nullptr) return;
     if(options & M_DRAW_CLEAR)device->clear_display();
     if(title != nullptr){
+#if defined(ARDUINO_ARCH_AVR)
+        memset(avr_buf,0,MENU_BUF_LEN);
+        strlcpy_P(avr_buf,(const char*)title,MENU_BUF_LEN);
+        device->print(0,(device->cols-strlen(avr_buf))/2,avr_buf);
+#else        
         device->print(0,(device->cols-strlen(title))/2,title);
+#endif
         start = 1;
     }
     for(uint8_t i = start;i<r_cnt+start;i++){
@@ -234,9 +232,9 @@ void basic_menu::draw_menu(){
         else rev = 0;
         if(options | M_PRINT_CLEAR) device->clear_row(i,0);//,strlen(itm));//items.len);
 #if defined(ARDUINO_ARCH_AVR)
-        memset(buf,0,MENU_BUF_LEN);
-        strlcpy_P(buf,get_row(i-start),MENU_BUF_LEN);
-        device->print(i,0,buf,rev);
+        memset(avr_buf,0,MENU_BUF_LEN);
+        strlcpy_P(avr_buf,get_row(i-start),MENU_BUF_LEN);
+        device->print(i,0,avr_buf,rev);
 #else
         device->print(i,0,get_row(i-start),rev);
 #endif

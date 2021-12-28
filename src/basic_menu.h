@@ -19,7 +19,7 @@
 //#define EN_M_U8X8   1
 //#define EN_GFX
 //#define EN_M_LQ
-//#define EN_M_SERIAL
+#define EN_M_SERIAL
 
 #define EN_M_NEXTION
 
@@ -77,19 +77,6 @@ typedef enum{
     M_NEXTION   //7 - Nextion
 } m_intf_t;
 
-
-#if defined(ARDUINO_ARCH_AVR)
-typedef struct{
-    PGM_P           base;
-    uint8_t         cnt;
-    uint8_t         len;
-    PGM_P operator[](int8_t i){
-        i=constrain(i,0,cnt-1);
-        if(base != nullptr) return base + (len * i);
-        else return nullptr;
-    };
-} ch_arr_t;
-#else
 typedef struct{
     const char      *base;
     uint8_t         cnt;
@@ -100,7 +87,7 @@ typedef struct{
         else return nullptr;
     };
 } ch_arr_t;
-#endif
+
 
 typedef enum{
     M_NEW_DEV     = 1,
@@ -129,7 +116,7 @@ public:
     };
 
     virtual void get_display_data(){};
-    bool chk_data(){return rows > 0 && cols >0; };
+    //bool chk_data(){return rows > 0 && cols >0; };
     virtual void clear_row(uint8_t row,uint8_t col, uint8_t w=0,uint8_t rev=0){};
     virtual void clear_area(uint8_t row,uint8_t col, uint8_t w,uint8_t h){};
     virtual void clear_display(){};
@@ -144,37 +131,42 @@ public:
     text_display    *device;
     uint8_t         cur_item;
     uint8_t         start_item;
-    
     ch_arr_t        items;
     uint8_t         disp_rows;
-    const char      *title;
     uint8_t         options;
     
-    basic_menu();
-    basic_menu(uint8_t dev_type,void *dev); //create text_display instance with new
-#if defined(ARDUINO_ARCH_AVR)    
-    basic_menu(PGM_P base,uint8_t cnt,uint8_t item_l,uint8_t d_rows); //device = nullptr
-    basic_menu(text_display *dev,PGM_P base,uint8_t cnt,uint8_t item_l,uint8_t d_rows = 0);//use dev
-    virtual PGM_P   get_row(uint8_t row);
-    void            set_items(PGM_P base,uint8_t cnt,uint8_t item_l);
+#if defined(ARDUINO_ARCH_AVR) 
+    //avr use pgm strings, so we need a buffer to copy them to ram
+    char avr_buf[MENU_BUF_LEN];
+    const __FlashStringHelper *title;
 #else
+    const char      *title;
+#endif    
+    
+    
+    basic_menu();
+    //basic_menu(uint8_t dev_type,void *dev); //create text_display instance with new
     basic_menu(const char *base,uint8_t cnt,uint8_t item_l,uint8_t d_rows); //device = nullptr
     basic_menu(text_display *dev,const char *base,uint8_t cnt,uint8_t item_l,uint8_t d_rows = 0);//use dev
     virtual const char      *get_row(uint8_t row);
     void            set_items(const char *base,uint8_t cnt,uint8_t item_l);
-#endif    
     void            set_device(text_display *dev);
-    void            set_device(uint8_t dev_type,void *dev);
+    //void            set_device(uint8_t dev_type,void *dev);
     
     uint8_t         get_cur_row();
     void            move_next();
     void            move_prev();
+#if defined(ARDUINO_ARCH_AVR)    
+    void            set_title(const __FlashStringHelper *tit);
+#else
     void            set_title(const char *tit);
+#endif    
+    
     void            set_options(uint8_t opts, uint8_t set=1); //0 to unset
     void            draw_menu();
     void            set_rows(uint8_t r){disp_rows=r;};
-    text_display    *new_device(uint8_t dev_type,void *dev);
-    ~basic_menu(){if(options & M_NEW_DEV) delete device;};
+    //text_display    *new_device(uint8_t dev_type,void *dev);
+    //~basic_menu(){if(options & M_NEW_DEV) delete device;};
 };
 
 

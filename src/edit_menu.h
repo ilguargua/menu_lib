@@ -23,6 +23,7 @@ typedef enum{
     EDT_IP,
     EDT_TIME,
     EDT_DATE,
+    EDT_NUMB_LIST,
     EDT_NONE    // just menu item, no edit, used for exit,save,etc
 } edt_type_t;
 
@@ -99,111 +100,20 @@ public:
     T               value;
     T               step;
     
-    edit_numb(uint8_t t,const char *text,T &val,const T min=0,const T max=0,const T stp=1):edit_item(EDT_NUMB){
-        char b[2];
-        value = val;
-        if(min == 0 and max == 0){
-            //min_val = std::numeric_limits<T>::min();
-            //max_val = std::numeric_limits<T>::max();
-            switch(t){
-                case NMB_CHAR:  //int8_t
-                    min_val = INT8_MIN;
-                    max_val = INT8_MAX;
-                    break;
-                case NMB_UCHAR: //uint8_t
-                    min_val = 0;
-                    max_val = UINT8_MAX;
-                    break;
-                case NMB_S_INT:
-                case NMB_INT:   // int16_t
-                    min_val = INT16_MIN;
-                    max_val = INT16_MAX;
-                    break;
-                case NMB_S_UINT:
-                case NMB_UINT:  //uint16_t
-                    min_val = 0;
-                    max_val = UINT16_MAX;
-                    break;
-                case NMB_L_INT: //int32_t
-                    min_val = INT32_MIN;
-                    max_val = INT32_MAX;
-                    break;
-                case NMB_L_UINT: //uint32_t
-                    min_val = 0;
-                    max_val = UINT32_MAX;
-                    break;
-                    
-            }
-        }
-        else{
-            min_val = min;
-            max_val = max;
-        }
-        step = stp;
-        //size = sizeof(T);
-        //val_ptr = &value;
-        n_type = t;
-        txt = text;
-        //T aaaa= std::numeric_limits<T>::min();
-        nmb_len = strlen(get_txt_value());
-        cur_digit = nmb_len -1;
-        edt_mode = EDT_MODE_STEP;
-    };
+    edit_numb(uint8_t t,const char *text,T &val,const T min=0,const T max=0,const T stp=1);
 
-    T get_value(T d=0){return value;};
+    T get_value(){return value;};
     
-    uint8_t set_next_value(){
-        value = constrain(value+step,min_val,max_val);
-        if(value == max_val) return 1;
-        return 0;
-    };
-    
-    uint8_t set_prev_value(){
-        value = constrain(value-step,min_val,max_val);
-        if(value == min_val)return 2;
-        return 0;
-    };
-
+    uint8_t set_next_value();
+    uint8_t set_prev_value();
     void set_step(T stp){step=stp;};
     void set_next_step(){step *=10;};
     void set_prev_step(){step /=10;};
-    void reset_step(){
-        if(/*n_type == NMB_DOUBLE or*/ n_type == NMB_FLOAT) step = .01;
-        else step = 1;
-        nmb_len = strlen(get_txt_value());
-        cur_digit = nmb_len -1;
-    }
+    void reset_step();
 #if defined(ARDUINO_ARCH_AVR)
-    void strip(){
-        nmb_len = strlen(conv_buf);
-        uint8_t c = 0;
-        while(conv_buf[c] == ' ') c++;
-        if(c > 0){
-            memmove(conv_buf,&conv_buf[c],nmb_len-c+1);
-        }
-        nmb_len = strlen(conv_buf);
-        while(conv_buf[nmb_len-1] == ' '){
-            conv_buf[nmb_len-1] = '\0';
-            nmb_len--;
-            //cur_digit = 0;
-        }
-    };
+    void strip();
 #endif    
-    const char *get_txt_value(){
-        memset(conv_buf,0,MENU_BUF_LEN);
-#if defined(ARDUINO_ARCH_AVR)
-        if(n_type == NMB_FLOAT){
-            dtostrf(value,MENU_BUF_LEN/2,2,conv_buf);
-            strip();
-        }
-        else snprintf(conv_buf,MENU_BUF_LEN,nmb_fmt[n_type],value);
-#else        
-        snprintf(conv_buf,MENU_BUF_LEN,nmb_fmt[n_type],value);
-#endif
-        nmb_len = strlen(conv_buf);
-        return conv_buf;
-    }
-    
+    const char *get_txt_value();
 };
 
 
@@ -217,9 +127,13 @@ public:
 };
 
 
-
+#if defined(ARDUINO_ARCH_AVR) 
+const PROGMEM char      ip_txt_fmt[] = "%3u:%3u:%3u:%3u";
+const PROGMEM char      ip_edt_fmt[] = "%03u:%03u:%03u:%03u";
+#else
 const char      ip_txt_fmt[] = "%3u:%3u:%3u:%3u";
 const char      ip_edt_fmt[] = "%03u:%03u:%03u:%03u";
+#endif
 const uint8_t   ip_fmt_len = 14;
 
 
@@ -230,11 +144,10 @@ public:
     uint8_t         cur_oct;
     uint8_t         step;
     const char      *cur_fmt;
-    
+
     edit_ip(const char *itm_txt,uint8_t &ip1,uint8_t &ip2,uint8_t &ip3,uint8_t &ip4);//:edit_item(EDT_IP);
 #ifdef ARDUINO
-    edit_ip(const char *itm_txt,IPAddress ip):edit_item(EDT_IP){};
-    edit_ip(const char *itm_txt,IPAddress *ip):edit_item(EDT_IP){};
+    edit_ip(const char *itm_txt,IPAddress ip);
 #endif
     
     const char  *get_txt_value();
@@ -254,8 +167,11 @@ typedef enum{
     TM_SEC
 } tm_ndx_t;
 
-
+#if defined(ARDUINO_ARCH_AVR)     
+const PROGMEM char  time_fmt[] = "%02u:%02u:%02u";
+#else
 const char  time_fmt[] = "%02u:%02u:%02u";
+#endif
 const uint8_t time_fmt_len = 7;
 
 class edit_time:public edit_item{
@@ -302,10 +218,19 @@ const char date_sep[] = "/\\-;:";
 
 
 const uint8_t date_fmt_len = 9;
+
+#if defined(ARDUINO_ARCH_AVR)
+const PROGMEM char  date_fmt[][16] = {"%4u%c%02u%c%02u",
+                              "%02u%c%02u%c%4u",
+                              "%02u%c%02u%c%4u"
+};
+#else
 const char  date_fmt[][16] = {"%4u%c%02u%c%02u",
                               "%02u%c%02u%c%4u",
                               "%02u%c%02u%c%4u"
 };
+
+#endif
 
 #define DT_YEAR_MIN     1900
 #define DT_YEAR_MAX     2999
@@ -358,12 +283,66 @@ public:
     
 };
 
+/* Numeric list, only integer supported, no float!!
+ * 
+ */
+template <typename T>
+class edit_numb_list:public edit_item,public basic_menu{
+public:
+    const T     *base;
+    uint8_t     cnt;
+    uint8_t     size;
+    
+    edit_numb_list(const char *text,const T *b,uint8_t cnt):edit_item(EDT_NUMB_LIST){
+        txt = text;
+        edt_mode = EDT_MODE_STEP;
+        set_items(nullptr,cnt,0);
+        disp_rows = 1;
+        device = nullptr;
+        size = sizeof(T);
+        base = b;
+    }
+
+    uint8_t set_next_value(){
+        move_prev();
+        return 0;
+    }
+
+    uint8_t set_prev_value(){
+        move_next();
+        return 0;
+    }
+    
+    const char *get_txt_value(){
+#if defined(ARDUINO_ARCH_AVR)
+        memset(avr_buf,0,MENU_BUF_LEN);
+        switch(size){
+            case 1:
+                itoa(pgm_read_byte(base+cur_item),avr_buf,10);
+                break;
+            case 2:
+                itoa(pgm_read_word(base+cur_item),avr_buf,10);
+                break;
+            case 4:
+                ltoa(pgm_read_dword(base+cur_item),avr_buf,10);
+                break;
+                
+        }
+        //strlcpy_P(avr_buf,items[cur_item],MENU_BUF_LEN);
+        return  avr_buf;
+#else        
+        snprintf(conv_buf,MENU_BUF_LEN,"%li",*(base+cur_item))
+        return conv_buf;
+#endif
+    }
+};
 
 
 class edit_list:public edit_item,public basic_menu{
 public:
-    
-    edit_list(const char *text,const char *base,uint8_t cnt,uint8_t item_l):edit_item(EDT_LIST){
+
+    edit_list(const char *text,const char *base,uint8_t cnt,uint8_t item_l):edit_item(EDT_LIST)
+    {    
         txt = text;
         edt_mode = EDT_MODE_STEP;
         set_items(base,cnt,item_l);
@@ -382,7 +361,13 @@ public:
     }
     
     const char *get_txt_value(){
+#if defined(ARDUINO_ARCH_AVR)
+        memset(avr_buf,0,MENU_BUF_LEN);
+        strlcpy_P(avr_buf,items[cur_item],MENU_BUF_LEN);
+        return  avr_buf;
+#else        
         return items[cur_item];
+#endif
     }
     
 };
