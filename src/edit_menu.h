@@ -84,6 +84,7 @@ public:
     virtual void set_next_step(){};
     virtual void set_prev_step(){};
     virtual void reset_step(){};
+    virtual void edit(text_display *disp, uint8_t row=0, uint8_t col=0, uint8_t rows=0){};
     virtual const char *get_txt_value(){return nullptr;};
 private:
     uint8_t set_next_digit_numb();
@@ -110,6 +111,7 @@ public:
     void set_next_step(){step *=10;};
     void set_prev_step(){step /=10;};
     void reset_step();
+    void edit(text_display *disp, uint8_t row=0, uint8_t col=0, uint8_t rows=0);
 #if defined(ARDUINO_ARCH_AVR)
     void strip();
 #endif    

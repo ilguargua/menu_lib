@@ -145,6 +145,16 @@ const char *edit_numb<T>::get_txt_value(){
     return conv_buf;
 }
 
+template <typename T>
+void edit_numb<T>::edit(text_display *disp, uint8_t row, uint8_t col, uint8_t rows){
+    memset(conv_buf,0,MENU_BUF_LEN);
+    snprintf(conv_buf,MENU_BUF_LEN,"%s [%li / %li]",txt,min_val,max_val);
+    disp->clear_row(row,col,strlen(conv_buf));
+    disp->print(row,col,txt);
+    disp->clear_row(row+1,col);
+    disp->print(row+1,get_txt_value());
+}
+
 /*******************************************************************************/
 
 
