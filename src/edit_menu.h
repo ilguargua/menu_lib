@@ -60,12 +60,11 @@ typedef enum{
 } edt_state_t;
 
 
-//char        conv_buf[MENU_BUF_LEN] = {0};
 
 class edit_item{
 public:
     uint8_t     type;       //edt_type_t
-    uint8_t     n_type;     //nmb_type_t
+    
     
     const char  *txt;
     char        conv_buf[MENU_BUF_LEN];
@@ -76,7 +75,7 @@ public:
     edit_item(edt_type_t t){type=t;};
     
     
-    virtual uint8_t set_next_digit();
+    virtual uint8_t set_next_digit(){};
     
     void set_edit_mode(uint8_t m){edt_mode = m;};
     virtual uint8_t set_next_value(){return 0;};
@@ -86,9 +85,12 @@ public:
     virtual void reset_step(){};
     virtual void edit(text_display *disp, uint8_t row=0, uint8_t col=0, uint8_t rows=0){};
     virtual const char *get_txt_value(){return nullptr;};
+/*    
 private:
     uint8_t set_next_digit_numb();
     uint8_t set_next_char();
+*/
+    
 };
 
 template <typename T>
@@ -100,6 +102,7 @@ public:
     T               max_val;
     T               value;
     T               step;
+    uint8_t         n_type;     //nmb_type_t
     
     edit_numb(uint8_t t,const char *text,T &val,const T min=0,const T max=0,const T stp=1);
 
@@ -107,6 +110,7 @@ public:
     
     uint8_t set_next_value();
     uint8_t set_prev_value();
+    uint8_t set_next_digit();
     void set_step(T stp){step=stp;};
     void set_next_step(){step *=10;};
     void set_prev_step(){step /=10;};
@@ -271,8 +275,13 @@ public:
     void strip();
     
     uint8_t set_next_value();
-    
     uint8_t set_prev_value();
+    uint8_t set_next_digit(){
+        get_txt_value();
+        if(cur_digit < nmb_len-1) cur_digit++;
+        else return 0;
+        return 1;
+    };
     
     const char *get_txt_value(){
         nmb_len = strlen(conv_buf);

@@ -184,8 +184,13 @@ const char *basic_menu::get_row(uint8_t row)
 {
     //if(row > this->item_cnt-1) row = this->item_cnt - 1;
     uint8_t r = constrain(row+start_item,0,items.cnt-1);
+#if defined(ARDUINO_ARCH_AVR)
+    memset(avr_buf,0,MENU_BUF_LEN);
+    strlcpy_P(avr_buf,items[r],MENU_BUF_LEN);
+    return avr_buf;
+#else    
     return items[r];//base_addr+(this->item_len * (row+this->start_item));
-    
+#endif    
 }
 
 uint8_t basic_menu::get_cur_row(){
@@ -231,13 +236,13 @@ void basic_menu::draw_menu(){
         if(i == get_cur_row()+start) rev = 1;
         else rev = 0;
         if(options | M_PRINT_CLEAR) device->clear_row(i,0);//,strlen(itm));//items.len);
-#if defined(ARDUINO_ARCH_AVR)
-        memset(avr_buf,0,MENU_BUF_LEN);
-        strlcpy_P(avr_buf,get_row(i-start),MENU_BUF_LEN);
-        device->print(i,0,avr_buf,rev);
-#else
+//#if defined(ARDUINO_ARCH_AVR)
+//        memset(avr_buf,0,MENU_BUF_LEN);
+//        strlcpy_P(avr_buf,get_row(i-start),MENU_BUF_LEN);
+//        device->print(i,0,avr_buf,rev);
+//#else
         device->print(i,0,get_row(i-start),rev);
-#endif
+//#endif
     }
     device->refresh();
 }

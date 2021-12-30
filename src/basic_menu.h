@@ -18,7 +18,7 @@
 //#define EN_M_U8G2
 //#define EN_M_U8X8   1
 //#define EN_GFX
-//#define EN_M_LQ
+#define EN_M_LQ
 #define EN_M_SERIAL
 
 #define EN_M_NEXTION

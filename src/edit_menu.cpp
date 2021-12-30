@@ -1,7 +1,7 @@
 #include <edit_menu.h>
 
 
-
+/*
 uint8_t edit_item::set_next_digit(){
     if(edt_mode != EDT_MODE_DIGIT) return 0;
     switch(type){
@@ -14,26 +14,9 @@ uint8_t edit_item::set_next_digit(){
     }
     return 0;
 }
+*/
+//uint8_t edit_item
 
-uint8_t edit_item::set_next_digit_numb(){
-    get_txt_value();
-    if(cur_digit > 0) cur_digit--;
-    else return 0;
-    if(conv_buf[cur_digit] == '-') return 0;
-    if(conv_buf[cur_digit] == '.'){
-        if(cur_digit > 0) cur_digit--;
-        else return 0;
-    } 
-    set_next_step();    
-    return 1;
-}
-
-uint8_t edit_item::set_next_char(){
-    get_txt_value();
-    if(cur_digit < nmb_len-1) cur_digit++;
-    else return 0;
-    return 1;
-}
 
 /*******************************************************************************/
 
@@ -150,9 +133,23 @@ void edit_numb<T>::edit(text_display *disp, uint8_t row, uint8_t col, uint8_t ro
     memset(conv_buf,0,MENU_BUF_LEN);
     snprintf(conv_buf,MENU_BUF_LEN,"%s [%li / %li]",txt,min_val,max_val);
     disp->clear_row(row,col,strlen(conv_buf));
-    disp->print(row,col,txt);
+    disp->print(row,col,conv_buf);
     disp->clear_row(row+1,col);
-    disp->print(row+1,get_txt_value());
+    disp->print(row+1,col,get_txt_value());
+}
+
+template <typename T>
+uint8_t edit_numb<T>::set_next_digit(){
+    get_txt_value();
+    if(cur_digit > 0) cur_digit--;
+    else return 0;
+    if(conv_buf[cur_digit] == '-') return 0;
+    if(conv_buf[cur_digit] == '.'){
+        if(cur_digit > 0) cur_digit--;
+        else return 0;
+    } 
+    set_next_step();    
+    return 1;
 }
 
 /*******************************************************************************/
@@ -167,7 +164,7 @@ edit_ip::edit_ip(const char *itm_txt,uint8_t &ip1,uint8_t &ip2,uint8_t &ip3,uint
     cur_oct = 0;
     cur_digit = 14;
     step = 1;
-    n_type = NMB_UCHAR;
+    //n_type = NMB_UCHAR;
     edt_mode = EDT_MODE_DIGIT;
     memset(conv_buf,0,MENU_BUF_LEN);
     cur_fmt = ip_txt_fmt;
@@ -183,7 +180,7 @@ edit_ip::edit_ip(const char *itm_txt,IPAddress ip):edit_item(EDT_IP){
     cur_oct = 0;
     cur_digit = 14;
     step = 1;
-    n_type = NMB_UCHAR;
+    //n_type = NMB_UCHAR;
     edt_mode = EDT_MODE_DIGIT;
     memset(conv_buf,0,MENU_BUF_LEN);
     cur_fmt = ip_txt_fmt;
@@ -241,7 +238,7 @@ edit_time::edit_time(const char *itm_txt,uint8_t &h,uint8_t &m,uint8_t &s):edit_
     cur_val = TM_SEC;
     cur_digit = time_fmt_len;
     step = 1;
-    n_type = NMB_UCHAR;
+    //n_type = NMB_UCHAR;
     edt_mode = EDT_MODE_DIGIT;
     memset(conv_buf,0,MENU_BUF_LEN);
     
@@ -320,7 +317,7 @@ edit_date::edit_date(const char *itm_txt,uint16_t &y,uint8_t &m,uint8_t &d):edit
     cur_val = DT_DAY;
     cur_digit = date_fmt_len;
     step = 1;
-    n_type = NMB_UCHAR;
+    //n_type = NMB_UCHAR;
     edt_mode = EDT_MODE_DIGIT;
     memset(conv_buf,0,MENU_BUF_LEN);
     //uint8_t a = month_length(2021,2);
@@ -546,17 +543,29 @@ const char *edit_menu::pad_txt(char *buf,const char *txt){
     return buf;
 }
 
+
+
 const char *edit_menu::get_row(uint8_t row){
     uint8_t r = constrain(row+start_item,0,items.cnt-1);
-    char pad_buf[10];
+    uint8_t l = 0;
     memset(device->conv_buf,0,MENU_BUF_LEN);
-    if(edt_items[r]->type == EDT_NONE) snprintf(device->conv_buf,MENU_BUF_LEN,"%s",edt_items[r]->txt);
-    else snprintf(device->conv_buf,MENU_BUF_LEN,"%s%s - %s",edt_items[r]->txt,
-                                                     pad_txt(pad_buf,edt_items[r]->txt),
-                                                     edt_items[r]->get_txt_value());
+//#if defined(ARDUINO_ARCH_AVR)
+//    l = strlen_P(edt_items[r]->txt);
+//    memcpy_P(device->conv_buf,edt_items[r]->txt,l);
+//#else
+    l = strlen(edt_items[r]->txt);
+    memcpy(device->conv_buf,edt_items[r]->txt,l);
+//#endif
+    for(uint8_t i=l;i<max_len+1;i++) memset(device->conv_buf+i,' ',1); //padding with space
+    memset(device->conv_buf+max_len+1,'-',1);
+    memset(device->conv_buf+max_len+2,' ',1);
+    memccpy(device->conv_buf+max_len+3,edt_items[r]->get_txt_value(),0,MENU_BUF_LEN-(max_len+3));
+    
     return device->conv_buf;
     
 }
+
+
 
 void edit_menu::edit_current_numb(uint8_t lmt){
     uint8_t start = (title == nullptr ? 0 : 1);

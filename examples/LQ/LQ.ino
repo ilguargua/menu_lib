@@ -40,9 +40,9 @@ edit_item *edt_list = new edit_list("list",mm_items[0],3,mm_items_len);
 edit_bool edt_bool("bool",b);
 //edit_numb<int> edt_int(NMB_S_INT,"int16",edt_var,-4321,9999);
 //edit_numb<float> edt_float(NMB_FLOAT,"float",f,1200,1300);
-edit_list edt_list("list",mm_items[0],3,mm_items_len);
-edit_time edt_time("time",h,m,s);
-edit_date edt_date("date",year,month,day);
+edit_list edt_list("list i",mm_items[0],3,mm_items_len);
+edit_time edt_time("time edt",h,m,s);
+edit_date edt_date("date edit",year,month,day);
 //pb_collection btns;
 
 //push_button up = push_button(MNU_PB_UP,LOW,M_PB_UP);
@@ -62,6 +62,8 @@ void setup(){
     //btns.add_btn(MNU_PB_CH,LOW,M_PB_CH);
     
     lcd.begin(20,4);
+    lcd.print("HELLO world!");
+    //while(1){};
     
     //edt_float.set_edit_mode(EDT_MODE_DIGIT);
     //edt_int.set_edit_mode(EDT_MODE_DIGIT);
@@ -69,8 +71,8 @@ void setup(){
     mm.add_item(&edt_time);
     mm.add_item(&edt_bool);
     //mm.add_item(&edt_int);
-    mm.add_item(&edt_date);
-    mm.add_item(&edt_list);
+   // mm.add_item(&edt_date);
+    //mm.add_item(&edt_list);
     //mm.set_device(&dev);
     //mm.set_items(mm_items[0],mm_items_cnt,mm_items_len);
     mm.set_options(M_PRINT_CLEAR);
