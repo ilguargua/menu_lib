@@ -72,10 +72,10 @@ public:
     uint8_t     nmb_len;
     uint8_t     edt_mode; // 0 - by step +-  1 - by digit 2 - no edit
     
-    edit_item(edt_type_t t){type=t;};
+    edit_item(edt_type_t t, const char *text){type=t;txt=text;};
     
     
-    virtual uint8_t set_next_digit(){};
+    virtual uint8_t set_next_digit(){return 0;};
     
     void set_edit_mode(uint8_t m){edt_mode = m;};
     virtual uint8_t set_next_value(){return 0;};
@@ -84,7 +84,8 @@ public:
     virtual void set_prev_step(){};
     virtual void reset_step(){};
     virtual void edit(text_display *disp, uint8_t row=0, uint8_t col=0, uint8_t rows=0){};
-    virtual const char *get_txt_value(){return nullptr;};
+    virtual const char  *get_txt_value(){return nullptr;};
+    const char          *get_menu_line(uint8_t max_len,uint8_t txt_only=0);
 /*    
 private:
     uint8_t set_next_digit_numb();
@@ -123,6 +124,151 @@ public:
 };
 
 
+template <typename T>
+edit_numb<T>::edit_numb(uint8_t t,const char *text,T &val,const T min,const T max,const T stp):edit_item(EDT_NUMB,text){
+    char b[2];
+    value = val;
+    if(min == 0 and max == 0){
+        //min_val = std::numeric_limits<T>::min();
+        //max_val = std::numeric_limits<T>::max();
+        switch(t){
+            case NMB_CHAR:  //int8_t
+                min_val = INT8_MIN;
+                max_val = INT8_MAX;
+                break;
+            case NMB_UCHAR: //uint8_t
+                min_val = 0;
+                max_val = UINT8_MAX;
+                break;
+            case NMB_S_INT:
+            case NMB_INT:   // int16_t
+                min_val = INT16_MIN;
+                max_val = INT16_MAX;
+                break;
+            case NMB_S_UINT:
+            case NMB_UINT:  //uint16_t
+                min_val = 0;
+                max_val = UINT16_MAX;
+                break;
+            case NMB_L_INT: //int32_t
+                min_val = INT32_MIN;
+                max_val = INT32_MAX;
+                break;
+            case NMB_L_UINT: //uint32_t
+                min_val = 0;
+                max_val = UINT32_MAX;
+                break;
+                
+        }
+    }
+    else{
+        min_val = min;
+        max_val = max;
+    }
+    step = stp;
+    //size = sizeof(T);
+    //val_ptr = &value;
+    n_type = t;
+    //txt = text;
+    //T aaaa= std::numeric_limits<T>::min();
+    nmb_len = strlen(get_txt_value());
+    cur_digit = nmb_len -1;
+    edt_mode = EDT_MODE_STEP;
+}
+
+
+
+template <typename T>
+const char *edit_numb<T>::get_txt_value(){
+    memset(conv_buf,0,MENU_BUF_LEN);
+    //uint8_t
+#if defined(ARDUINO_ARCH_AVR)
+    if(n_type == NMB_FLOAT){
+        dtostrf(value,0-MENU_BUF_LEN,2,conv_buf);
+        for(uint8_t i=0;i<MENU_BUF_LEN;i++){
+            if(conv_buf[i] == ' '){
+                conv_buf[i] = 0;
+                break;
+            }
+        }
+        //strip();
+    }
+    else snprintf(conv_buf,MENU_BUF_LEN,nmb_fmt[n_type],value);
+#else        
+    snprintf(conv_buf,MENU_BUF_LEN,nmb_fmt[n_type],value);
+#endif
+    nmb_len = strlen(conv_buf);
+    return conv_buf;
+}
+
+template <typename T>
+uint8_t edit_numb<T>::set_next_value(){
+    value = constrain(value+step,min_val,max_val);
+    if(value == max_val) return 1;
+    return 0;
+}
+
+template <typename T>
+uint8_t edit_numb<T>::set_prev_value(){
+    value = constrain(value-step,min_val,max_val);
+    if(value == min_val)return 2;
+    return 0;
+}
+
+template <typename T>
+void edit_numb<T>::reset_step(){
+    if(n_type == NMB_FLOAT) step = .01;
+    else step = 1;
+    nmb_len = strlen(get_txt_value());
+    cur_digit = nmb_len -1;
+}
+
+#if defined(ARDUINO_ARCH_AVR)
+template <typename T>
+void edit_numb<T>::strip(){
+    nmb_len = strlen(conv_buf);
+    uint8_t c = 0;
+    while(conv_buf[c] == ' ') c++;
+    if(c > 0){
+        memmove(conv_buf,&conv_buf[c],nmb_len-c+1);
+    }
+    nmb_len = strlen(conv_buf);
+    while(conv_buf[nmb_len-1] == ' '){
+        conv_buf[nmb_len-1] = '\0';
+        nmb_len--;
+        //cur_digit = 0;
+    }
+}
+#endif
+
+
+template <typename T>
+void edit_numb<T>::edit(text_display *disp, uint8_t row, uint8_t col, uint8_t rows){
+    memset(conv_buf,0,MENU_BUF_LEN);
+    snprintf(conv_buf,MENU_BUF_LEN,"%s [%li / %li]",txt,min_val,max_val);
+    disp->clear_row(row,col,strlen(conv_buf));
+    disp->print(row,col,conv_buf);
+    disp->clear_row(row+1,col);
+    disp->print(row+1,col,get_txt_value());
+}
+
+template <typename T>
+uint8_t edit_numb<T>::set_next_digit(){
+    get_txt_value();
+    if(cur_digit > 0) cur_digit--;
+    else return 0;
+    if(conv_buf[cur_digit] == '-') return 0;
+    if(conv_buf[cur_digit] == '.'){
+        if(cur_digit > 0) cur_digit--;
+        else return 0;
+    } 
+    set_next_step();    
+    return 1;
+}
+
+
+
+/*
 class edit_none:public edit_item{
 public:
     
@@ -131,7 +277,7 @@ public:
         edt_mode = EDT_MODE_NONE;
     };
 };
-
+*/
 
 #if defined(ARDUINO_ARCH_AVR) 
 const PROGMEM char      ip_txt_fmt[] = "%3u:%3u:%3u:%3u";
@@ -304,8 +450,8 @@ public:
     uint8_t     cnt;
     uint8_t     size;
     
-    edit_numb_list(const char *text,const T *b,uint8_t cnt):edit_item(EDT_NUMB_LIST){
-        txt = text;
+    edit_numb_list(const char *text,const T *b,uint8_t cnt):edit_item(EDT_NUMB_LIST,text){
+        //txt = text;
         edt_mode = EDT_MODE_STEP;
         set_items(nullptr,cnt,0);
         disp_rows = 1;
@@ -352,9 +498,9 @@ public:
 class edit_list:public edit_item,public basic_menu{
 public:
 
-    edit_list(const char *text,const char *base,uint8_t cnt,uint8_t item_l):edit_item(EDT_LIST)
+    edit_list(const char *text,const char *base,uint8_t cnt,uint8_t item_l):edit_item(EDT_LIST,text)
     {    
-        txt = text;
+        //txt = text;
         edt_mode = EDT_MODE_STEP;
         set_items(base,cnt,item_l);
         disp_rows = 1;
@@ -400,9 +546,9 @@ public:
     bool    value;
     uint8_t style;
     
-    edit_bool(const char *text,bool &val):edit_item(EDT_BOOL){
+    edit_bool(const char *text,bool &val):edit_item(EDT_BOOL,text){
         value = val;
-        txt = text;
+        //txt = text;
         style = SB_AST;
     };
     
@@ -438,7 +584,7 @@ public:
     
     edit_menu(text_display *dev);
     void            add_item(edit_item *itm);
-    const char      *pad_txt(char *buf,const char *txt);
+    //const char      *pad_txt(char *buf,const char *txt);
     void            edit_current(uint8_t lmt=0);  //0- OK  1- max_val hitted  2- min_val hitted
     uint8_t         edit_set_next();
     uint8_t         edit_set_prev();
