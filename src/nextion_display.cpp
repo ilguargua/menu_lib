@@ -24,7 +24,7 @@ void nextion_display::init(Stream *disp,uint8_t r,uint8_t c,uint8_t f_ndx,uint8_
     rows = r;
     cols = c;
     row_h = f_h+2;
-    col_l = f_w+2;
+    col_l = f_w;//+2;
     font = f_ndx;
     d_cols = get_nextion_data('w')/f_w;
     d_rows = get_nextion_data('h')/f_h;

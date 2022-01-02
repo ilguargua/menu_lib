@@ -85,7 +85,7 @@ public:
     virtual void reset_step(){};
     virtual void edit(text_display *disp, uint8_t row=0, uint8_t col=0, uint8_t rows=0){};
     virtual const char  *get_txt_value(){return nullptr;};
-    const char          *get_menu_line(uint8_t max_len,uint8_t txt_only=0);
+    const char          *get_menu_line(uint8_t max_len,uint8_t lmt,uint8_t txt_only=0);
 /*    
 private:
     uint8_t set_next_digit_numb();
@@ -118,7 +118,7 @@ public:
     void reset_step();
     void edit(text_display *disp, uint8_t row=0, uint8_t col=0, uint8_t rows=0);
 #if defined(ARDUINO_ARCH_AVR)
-    void strip();
+    //void strip();
 #endif    
     const char *get_txt_value();
 };
@@ -184,7 +184,7 @@ const char *edit_numb<T>::get_txt_value(){
     //uint8_t
 #if defined(ARDUINO_ARCH_AVR)
     if(n_type == NMB_FLOAT){
-        dtostrf(value,0-MENU_BUF_LEN,2,conv_buf);
+        dtostrf(value,0-(MENU_BUF_LEN-1),2,conv_buf);
         for(uint8_t i=0;i<MENU_BUF_LEN;i++){
             if(conv_buf[i] == ' '){
                 conv_buf[i] = 0;
@@ -223,6 +223,7 @@ void edit_numb<T>::reset_step(){
     cur_digit = nmb_len -1;
 }
 
+/*
 #if defined(ARDUINO_ARCH_AVR)
 template <typename T>
 void edit_numb<T>::strip(){
@@ -240,7 +241,7 @@ void edit_numb<T>::strip(){
     }
 }
 #endif
-
+*/
 
 template <typename T>
 void edit_numb<T>::edit(text_display *disp, uint8_t row, uint8_t col, uint8_t rows){
@@ -530,9 +531,13 @@ public:
 };
 
 
-
+#if defined(ARDUINO_ARCH_AVR)
+const PROGMEM char true_symbols[3][4] = {"ON ","YES","[*]"};
+const PROGMEM char false_symbols[3][4] = {"OFF","NO ","[ ]"};
+#else
 const char true_symbols[3][4] = {"ON ","YES","[*]"};
 const char false_symbols[3][4] = {"OFF","NO ","[ ]"};
+#endif
 
 typedef enum{
     ON_OFF,
@@ -568,8 +573,15 @@ public:
     }
     
     const char *get_txt_value(){
+#if defined(ARDUINO_ARCH_AVR)
+        memset(conv_buf,0,MENU_BUF_LEN);
+        if(value) strlcpy_P(conv_buf,true_symbols[style],MENU_BUF_LEN-1);
+        else strlcpy_P(conv_buf,false_symbols[style],MENU_BUF_LEN-1);
+        return conv_buf;
+#else        
         if (value) return true_symbols[style];
         else return false_symbols[style];
+#endif        
     }
     
 };

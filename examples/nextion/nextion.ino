@@ -11,7 +11,7 @@
 #include <edit_menu.h>
 #include <nextion_display.h>
 #include <test_data.h>
-
+//#include <u8x8_display.h>
 
 
 SoftwareSerial intf(10,11);  //we use software serial for display, so Serial can be used for debug
@@ -25,49 +25,51 @@ nextion_display disp;
 //uint32_t  ser_br[]={1200,2400,4800,9600,19200,38400,57600,74880,115200,230400};
 //uint32_t  tt = 1234;
 
+//U8X8_SSD1306_128X64_NONAME_HW_I2C  u8x8_dev;
+
+//u8x8_display  disp;
+
+edit_menu mm(&disp);
+
+
+
+
+
 void setup(){
     char buf[60];
     memset(buf,0,40);
     intf.begin(38400);  //This have to match the nextion baudrate
     
-    //const uint32_t *tf = ser_br;
-    
-    //tt = *(tf+9);
-    //ltoa(*(tf+7),buf,10);
-    
-    
-    
-    
-    //nextion_display disp(&intf,5,16,0,18,10);
     //basic_menu bm;
     Serial.begin(115200);
     Serial.println("Program begin..");
     delay(500);
     
-    //Serial.println( *(tf+2));
-    //Serial.println(tt);
-    //Serial.println(buf);
-    
-    
-    //memset(buf,0,40);
     //set input buttons
     pinMode(MNU_PB_UP,INPUT);
     pinMode(MNU_PB_DN,INPUT);
     pinMode(MNU_PB_CH,INPUT);
-    
+
+
     disp.init(&intf,5,16,0,14,8);
-    
-    /*
-    Serial.print("nxt_buf : ");
-    for(uint8_t i=0;i<10;i++){
-        Serial.print((uint8_t)disp.nxt_buf[i],HEX);
-        Serial.print(" ");
-    }
-    Serial.println();
-    */
     snprintf_P(buf,40,PSTR("rest%c%c%c"),NXT_MSG_END);
     intf.print(buf);
     delay(1000);
+    
+    
+    //edt_float.set_edit_mode(EDT_MODE_DIGIT);
+    //edt_int.set_edit_mode(EDT_MODE_DIGIT);
+    //edt_date.set_fmt(DT_DMY);
+    
+    //mm.add_item(&edt_time);
+    //mm.add_item(&edt_date);
+    //mm.add_item(&edt_bool);
+    //mm.add_item(&edt_int);
+    //mm.add_item(&edt_float);
+    //mm.add_item(&edt_list);
+    
+    
+    
     
     /*
     memset(buf,0,40);
@@ -92,9 +94,23 @@ void setup(){
     
     //disp.print(0,0,"hello");
     
+    mm.set_options(M_PRINT_CLEAR);
+    //mm.set_rows(1);
+    mm.set_rows(6);
+    //mm.set_title("Main menu");
+    mm.draw_menu();
     
-    
-    
+    /*
+    for(uint8_t i=0;i<mm.items.cnt;i++){
+        Serial.print("mm.edt_items[");
+        Serial.print(i);
+        Serial.print("].conv_buf = >");
+        Serial.print(mm.edt_items[i]->conv_buf);
+        Serial.println("<");
+    }
+    */
+    //Serial.println(disp.cols);
+    /*
     bm.set_device(&disp);
     bm.set_items(mm_items[0],mm_items_cnt,mm_items_len);
     bm.set_options(M_PRINT_CLEAR);
@@ -102,6 +118,7 @@ void setup(){
     bm.set_title(F("Main menu"));
     
     bm.draw_menu();
+    */
     //delay(2000);
     //disp.clear_row(4,0);
     /*
@@ -127,6 +144,42 @@ void setup(){
 
 
 void loop(){
+    
+    switch(chk_pb()){
+        case M_PB_UP:
+            if(mm.state == EDT_STATE_MENU){ 
+                mm.move_prev();
+            }
+            else{ 
+                mm.edit_set_next();
+            }
+            break;
+        case M_PB_DN:
+            if(mm.state == EDT_STATE_MENU){
+                mm.move_next();
+            }
+            else{ 
+                mm.edit_set_prev();
+            }
+
+            break;
+        case M_PB_CH:
+            if(mm.state == EDT_STATE_MENU){
+                mm.edit_current();
+            }
+            else{
+                if(mm.set_next_digit()){ 
+                    mm.edit_current();
+                }
+                else{ 
+                    mm.draw_menu();
+                }
+            }
+            break;
+        
+    }
+    
+    /*
     static uint8_t cur_menu = 0; //0 main , 1 sub
     
     switch(chk_pb()){
@@ -165,6 +218,7 @@ void loop(){
             }
             break;
     }
+    */
 }
 
 

@@ -16,11 +16,10 @@
 
 //#define EN_M_CURSES
 //#define EN_M_U8G2
-//#define EN_M_U8X8   1
+#define EN_M_U8X8   1
 //#define EN_GFX
-#define EN_M_LQ
+//#define EN_M_LQ
 #define EN_M_SERIAL
-
 #define EN_M_NEXTION
 
 #ifdef EN_M_CURSES
@@ -39,7 +38,7 @@
 
 //This is the len of memory buffer used by text_display and edit_item classes
 //Should be long at least as the numb. of char of display+1
-#define MENU_BUF_LEN 22
+#define MENU_BUF_LEN 20
 
 
 

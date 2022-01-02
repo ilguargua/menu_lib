@@ -20,6 +20,8 @@ U8X8_SSD1306_128X64_NONAME_HW_I2C  u8x8_dev;
 
 //serial_display dsp(&Serial);
 //basic_menu    mm(&dsp,&mm_items[0][0],mm_items_cnt,mm_items_len,4);
+
+//u8x8_display  disp;
 basic_menu mm;
 
 void setup(){
@@ -32,11 +34,12 @@ void setup(){
     u8x8_dev.setI2CAddress(0x78);
     u8x8_dev.begin();
     u8x8_dev.setFont(u8x8_font_chroma48medium8_r);
+    //disp.set_device(&u8x8_dev);
     //u8x8_display dev(&u8x8_dev);
     //basic_menu    mm(&dev,&mm_items[0][0],mm_items_cnt,mm_items_len);
     //basic_menu    mm(&dev,mm_items[0],mm_items_cnt,mm_items_len);
     //basic_menu mm(M_U8X8,&u8x8_dev);
-    mm.set_device(M_U8X8,&u8x8_dev);
+    //mm.set_device(&disp);
     mm.set_items(mm_items[0],mm_items_cnt,mm_items_len);
     mm.set_options(M_NO_ROLLOVER | M_PRINT_CLEAR);
     mm.set_rows(4);

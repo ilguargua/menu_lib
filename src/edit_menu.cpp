@@ -18,8 +18,9 @@ uint8_t edit_item::set_next_digit(){
 //uint8_t edit_item
 
 
-const char * edit_item::get_menu_line(uint8_t max_len,uint8_t txt_only){
+const char * edit_item::get_menu_line(uint8_t max_len,uint8_t lmt,uint8_t txt_only){
     char val[MENU_BUF_LEN];
+    
     memset(val,0,MENU_BUF_LEN);
     strncpy(val,get_txt_value(),MENU_BUF_LEN-1);
     //memset(conv_buf,0,MENU_BUF_LEN);
@@ -36,7 +37,7 @@ const char * edit_item::get_menu_line(uint8_t max_len,uint8_t txt_only){
     memset(conv_buf+max_len+1,'-',1);
     memset(conv_buf+max_len+2,' ',1);
     if(txt_only > 0) return conv_buf;
-    memccpy(conv_buf+max_len+3,val,0,MENU_BUF_LEN-(max_len+3));
+    memccpy(conv_buf+max_len+3,val,0,lmt-(max_len+3));
     return conv_buf;
 }
 
@@ -443,7 +444,8 @@ const char *edit_menu::pad_txt(char *buf,const char *txt){
 
 const char *edit_menu::get_row(uint8_t row){
     uint8_t r = constrain(row+start_item,0,items.cnt-1);
-    return edt_items[r]->get_menu_line(max_len);
+    uint8_t lmt = min(MENU_BUF_LEN,device->cols);
+    return edt_items[r]->get_menu_line(max_len,lmt);
 /*
     uint8_t l = 0;
     memset(device->conv_buf,0,MENU_BUF_LEN);
@@ -475,17 +477,28 @@ void edit_menu::edit_current_numb(uint8_t lmt){
                                                     pad_txt(pad_buf,edt_items[cur_item]->txt));
     device->print(get_cur_row()+start,0,device->conv_buf,0);
     */
-    device->print(get_cur_row()+start,0,edt_items[cur_item]->get_menu_line(max_len,1),0);
-    device->clear_row(get_cur_row()+start,max_len+3);
+    uint8_t av_cols = min(MENU_BUF_LEN,device->cols);
+    uint8_t val_len = strlen(edt_items[cur_item]->get_txt_value());
+    
+    //device->print(get_cur_row()+start,0,edt_items[cur_item]->get_menu_line(max_len,av_cols,1),0);
+    //device->clear_row(get_cur_row()+start,max_len+3);
+    device->clear_row(get_cur_row()+start,0);
     if(edt_items[cur_item]->edt_mode == EDT_MODE_STEP){
-        device->print(get_cur_row()+start,max_len+3,edt_items[cur_item]->get_txt_value(),1);
+        //device->print(get_cur_row()+start,max_len+3,edt_items[cur_item]->get_txt_value(),1);
+        device->print(get_cur_row()+start,av_cols-val_len-1,edt_items[cur_item]->get_txt_value(),1);
     }
     else{
-        device->print(get_cur_row()+start,max_len+3,edt_items[cur_item]->get_txt_value());
+        //device->print(get_cur_row()+start,max_len+3,edt_items[cur_item]->get_txt_value());
+        device->print(get_cur_row()+start,av_cols-val_len-1,edt_items[cur_item]->get_txt_value());
         char b[2] = {'\0','\0'};
         b[0] = edt_items[cur_item]->get_txt_value()[edt_items[cur_item]->cur_digit];
-        device->print(get_cur_row()+start,max_len+3+edt_items[cur_item]->cur_digit,b,2);
+        //device->print(get_cur_row()+start,max_len+3+edt_items[cur_item]->cur_digit,b,2);
+        device->print(get_cur_row()+start,(av_cols-val_len-1)+edt_items[cur_item]->cur_digit,b,2);
     }
+    uint8_t txt_len = strlen(edt_items[cur_item]->get_menu_line(max_len,av_cols,1));
+    if(txt_len > av_cols-val_len-2) edt_items[cur_item]->conv_buf[av_cols-val_len-3]=0;
+    device->print(get_cur_row()+start,0,edt_items[cur_item]->conv_buf);
+    edt_items[cur_item]->get_txt_value(); //reload conv_buf with value
     if(lmt > 0){
         if(lmt == 1){
             device->print(get_cur_row()+start,0,"!max!",1);
@@ -542,8 +555,8 @@ uint8_t edit_menu::edit_set_prev_list(){
 
 void edit_menu::edit_current_list(){
     uint8_t start = (title == nullptr ? 0 : 1);
-    if(state == 0){ 
-        state = 1;
+    if(state == EDT_STATE_MENU){ 
+        state = EDT_STATE_EDIT;
         //if(edt_items[cur_item]->edt_mode == 1)edt_items[cur_item]->reset_step();
     }
     //char pad_buf[10];
@@ -552,25 +565,22 @@ void edit_menu::edit_current_list(){
     //snprintf(device->conv_buf,MENU_BUF_LEN,"%s%s - ",edt_items[cur_item]->txt,
     //                                                pad_txt(pad_buf,edt_items[cur_item]->txt));
     //device->print(get_cur_row()+start,0,device->conv_buf,0);
-    device->print(get_cur_row()+start,0,edt_items[cur_item]->get_menu_line(max_len,1),0);
-    device->clear_row(get_cur_row()+start,max_len+3);
+    
+    uint8_t av_cols = min(MENU_BUF_LEN,device->cols);
+    uint8_t val_len = strlen(edt_items[cur_item]->get_txt_value());
+    
+    
+    //device->print(get_cur_row()+start,0,edt_items[cur_item]->get_menu_line(max_len,1),0);
+    //device->clear_row(get_cur_row()+start,max_len+3);
+    device->clear_row(get_cur_row()+start,0);
     //if(edt_items[cur_item]->edt_mode == 0){
-    device->print(get_cur_row()+start,max_len+3,edt_items[cur_item]->get_txt_value(),1);
-    //}
-    /*
-    else{
-        device->print(get_cur_row()+start,max_len+3,edt_items[cur_item]->get_txt_value());
-        char b[2] = {'\0','\0'};
-        b[0] = edt_items[cur_item]->get_txt_value()[edt_items[cur_item]->cur_digit];
-        device->print(get_cur_row()+start,max_len+3+edt_items[cur_item]->cur_digit,b,1);
-    }
-    if(lmt > 0){
-        if(lmt == 1){
-            device->print(get_cur_row()+start,0,"!max!",1);
-        }
-        else device->print(get_cur_row()+start,0,"!min!",1);
-    }
-    */
+    //device->print(get_cur_row()+start,max_len+3,edt_items[cur_item]->get_txt_value(),1);
+    device->print(get_cur_row()+start,av_cols-val_len-1,edt_items[cur_item]->get_txt_value(),1);
+    uint8_t txt_len = strlen(edt_items[cur_item]->get_menu_line(max_len,av_cols,1));
+    if(txt_len > av_cols-val_len-2) edt_items[cur_item]->conv_buf[av_cols-val_len-3]=0;
+    device->print(get_cur_row()+start,0,edt_items[cur_item]->conv_buf);
+    
+    
 }
 
 
