@@ -49,8 +49,12 @@ const char * edit_item::get_menu_line(uint8_t max_len,uint8_t lmt,uint8_t txt_on
 
 /*******************************************************************************/
 
-
-edit_ip::edit_ip(const char *itm_txt,uint8_t &ip1,uint8_t &ip2,uint8_t &ip3,uint8_t &ip4):edit_item(EDT_IP,itm_txt){
+#if defined(ARDUINO_ARCH_AVR)
+edit_ip::edit_ip(const __FlashStringHelper *itm_txt,uint8_t &ip1,uint8_t &ip2,uint8_t &ip3,uint8_t &ip4):edit_item(EDT_IP,(const char*)itm_txt)
+#else
+edit_ip::edit_ip(const char *itm_txt,uint8_t &ip1,uint8_t &ip2,uint8_t &ip3,uint8_t &ip4):edit_item(EDT_IP,itm_txt)
+#endif
+{
     value[3] = ip1;
     value[2] = ip2;
     value[1] = ip3;
@@ -65,8 +69,12 @@ edit_ip::edit_ip(const char *itm_txt,uint8_t &ip1,uint8_t &ip2,uint8_t &ip3,uint
     cur_fmt = ip_txt_fmt;
 }
 
-#ifdef ARDUINO
-edit_ip::edit_ip(const char *itm_txt,IPAddress ip):edit_item(EDT_IP,itm_txt){
+#if defined(ARDUINO_ARCH_AVR)
+edit_ip::edit_ip(const __FlashStringHelper *itm_txt,IPAddress ip):edit_item(EDT_IP,(const char*)itm_txt)
+#else
+edit_ip::edit_ip(const char *itm_txt,IPAddress ip):edit_item(EDT_IP,itm_txt)
+#endif
+{
     value[3] = ip[3];
     value[2] = ip[2];
     value[1] = ip[1];
@@ -80,7 +88,7 @@ edit_ip::edit_ip(const char *itm_txt,IPAddress ip):edit_item(EDT_IP,itm_txt){
     memset(conv_buf,0,MENU_BUF_LEN);
     cur_fmt = ip_txt_fmt;
 }
-#endif
+
 
 const char * edit_ip::get_txt_value(){
     memset(conv_buf,0,MENU_BUF_LEN);
@@ -124,8 +132,12 @@ uint8_t edit_ip::set_next_digit(){
 }
 
 /********************************************************************************/
-
-edit_time::edit_time(const char *itm_txt,uint8_t &h,uint8_t &m,uint8_t &s):edit_item(EDT_TIME,itm_txt){
+#if defined(ARDUINO_ARCH_AVR)
+edit_time::edit_time(const __FlashStringHelper *itm_txt,uint8_t &h,uint8_t &m,uint8_t &s):edit_item(EDT_TIME,(const char*)itm_txt)
+#else
+edit_time::edit_time(const char *itm_txt,uint8_t &h,uint8_t &m,uint8_t &s):edit_item(EDT_TIME,itm_txt)
+#endif
+{
     value[TM_HOUR] = h;
     value[TM_MIN] = m;
     value[TM_SEC] = s;
@@ -202,20 +214,22 @@ uint8_t edit_time::set_next_digit(){
 
 /********************************************************************************/
 
-edit_date::edit_date(const char *itm_txt,uint16_t &y,uint8_t &m,uint8_t &d):edit_item(EDT_DATE,itm_txt){
+#if defined(ARDUINO_ARCH_AVR)
+edit_date::edit_date(const __FlashStringHelper *itm_txt,uint16_t &y,uint8_t &m,uint8_t &d):edit_item(EDT_DATE,(const char*)itm_txt)
+#else
+edit_date::edit_date(const char *itm_txt,uint16_t &y,uint8_t &m,uint8_t &d):edit_item(EDT_DATE,itm_txt)
+#endif
+{
     value[DT_YEAR] = y;
     value[DT_MONTH] = m;
     value[DT_DAY] = d;
-    //txt = itm_txt;
     fmt = DT_YMD;
     sep = DT_SEP_SLASH;
     cur_val = DT_DAY;
     cur_digit = date_fmt_len;
     step = 1;
-    //n_type = NMB_UCHAR;
     edt_mode = EDT_MODE_DIGIT;
     memset(conv_buf,0,MENU_BUF_LEN);
-    //uint8_t a = month_length(2021,2);
 }
 
 
@@ -272,9 +286,7 @@ uint8_t edit_date::set_next_digit(){
     
     if(cur_digit > 0) cur_digit--;
     else{
-        //cur_fmt = ip_txt_fmt;
         get_txt_value();
-        //cur_val = 0;
         switch(fmt){
             case DT_YMD:
                 cur_val = DT_DAY;
@@ -364,11 +376,14 @@ uint8_t edit_date::set_prev_value(){
 
 
 /******************************************************************************/
-
-edit_string::edit_string(const char *itm_txt,const char *str):edit_item(EDT_STRING,itm_txt){
+#if defined(ARDUINO_ARCH_AVR)
+edit_string::edit_string(const __FlashStringHelper *itm_txt,const char *str):edit_item(EDT_STRING,(const char*)itm_txt)
+#else
+edit_string::edit_string(const char *itm_txt,const char *str):edit_item(EDT_STRING,itm_txt)
+#endif
+{
     memset(conv_buf,0,MENU_BUF_LEN);
     strncpy(conv_buf,str,MENU_BUF_LEN-1);
-    //txt = itm_txt;
     cur_digit = 0;
     nmb_len = strlen(conv_buf);
     edt_mode = EDT_MODE_DIGIT;
@@ -393,7 +408,6 @@ uint8_t edit_string::set_next_value(){
     c++;
     if(c == 127) c = 32;
     if(strchr(ban_chars,c) != nullptr) c++;
-    //c = constrain(c,32,126);
     conv_buf[cur_digit] = c;
     strip();
     return 0;
@@ -409,7 +423,75 @@ uint8_t edit_string::set_prev_value(){
     strip();
     return 0;
 };
+/*******************************************************************************/
+#if defined(ARDUINO_ARCH_AVR)
+edit_list::edit_list(const __FlashStringHelper *text,const char *base,uint8_t cnt,uint8_t item_l):edit_item(EDT_LIST,(const char*)text)
+#else
+edit_list::edit_list(const char *text,const char *base,uint8_t cnt,uint8_t item_l):edit_item(EDT_LIST,text)
+#endif
+{    
+    edt_mode = EDT_MODE_STEP;
+    set_items(base,cnt,item_l);
+    disp_rows = 1;
+    device = nullptr;
+}
 
+uint8_t edit_list::set_next_value(){
+    move_prev();
+    return 0;
+}
+
+uint8_t edit_list::set_prev_value(){
+    move_next();
+    return 0;
+}
+
+const char *edit_list::get_txt_value(){
+#if defined(ARDUINO_ARCH_AVR)
+    memset(avr_buf,0,MENU_BUF_LEN);
+    strlcpy_P(avr_buf,items[cur_item],MENU_BUF_LEN);
+    return  avr_buf;
+#else        
+    return items[cur_item];
+#endif
+}
+/*******************************************************************************/
+#if defined(ARDUINO_ARCH_AVR)
+edit_bool::edit_bool(const __FlashStringHelper *text,bool &val):edit_item(EDT_BOOL,(const char*)text)
+#else
+edit_bool::edit_bool(const char *text,bool &val):edit_item(EDT_BOOL,text)
+#endif
+{
+    value = val;
+    style = SB_AST;
+}
+    
+void edit_bool::set_style(uint8_t s){
+    s = constrain(s,0,BOOL_CNT-1);
+    style = s;
+}
+
+uint8_t edit_bool::set_next_value(){
+    value = !value;
+    return 0;
+}
+
+uint8_t edit_bool::set_prev_value(){
+    value = !value;
+    return 0;
+}
+
+const char *edit_bool::get_txt_value(){
+#if defined(ARDUINO_ARCH_AVR)
+    memset(conv_buf,0,MENU_BUF_LEN);
+    if(value) strlcpy_P(conv_buf,true_symbols[style],MENU_BUF_LEN-1);
+    else strlcpy_P(conv_buf,false_symbols[style],MENU_BUF_LEN-1);
+    return conv_buf;
+#else        
+    if (value) return true_symbols[style];
+    else return false_symbols[style];
+#endif        
+}
 
 
 

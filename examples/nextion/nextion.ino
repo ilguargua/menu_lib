@@ -31,7 +31,7 @@ nextion_display disp;
 
 edit_menu mm(&disp);
 
-
+edit_ip edt_ip(PSTR("gateway"),ip_nmb[0],ip_nmb[1],ip_nmb[2],ip_nmb[3]);
 
 
 
@@ -43,7 +43,10 @@ void setup(){
     //basic_menu bm;
     Serial.begin(115200);
     Serial.println("Program begin..");
+    //pinMode(13,INPUT_PULLUP);
+    //pinMode(13,OUTPUT);
     delay(500);
+    //digitalWrite(13,HIGH);
     
     //set input buttons
     pinMode(MNU_PB_UP,INPUT);
