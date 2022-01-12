@@ -71,10 +71,18 @@ public:
     uint8_t     cur_digit;
     uint8_t     nmb_len;
     uint8_t     edt_mode; // 0 - by step +-  1 - by digit 2 - no edit
+    uint8_t     options;
     
-    edit_item(edt_type_t t, const char *text){type=t;txt=text;};
+    //edit_item(edt_type_t t, const char *text){type=t;txt=text;};
+    edit_item(edt_type_t t){type=t;};
+
+#if defined(ARDUINO_ARCH_AVR)
+    void set_txt(const __FlashStringHelper *text){txt = (const char*) text;};
+#endif
+    void set_txt(const char *text){txt = text;};
+//#endif    
     
-    
+    void set_options(uint8_t opt,uint8_t set=1);
     virtual uint8_t set_next_digit(){return 0;};
     
     void set_edit_mode(uint8_t m){edt_mode = m;};
@@ -94,6 +102,13 @@ private:
     
 };
 
+
+typedef enum{
+    NMB_CHK_LOW     = 1,    //check low limit
+    NMB_CHK_HIGH    = 2,    //check high limit
+} nmb_options_t;
+
+
 template <typename T>
 class edit_numb:public edit_item{
 public:
@@ -104,14 +119,25 @@ public:
     T               value;
     T               step;
     uint8_t         n_type;     //nmb_type_t
+    //uint8_t         nmb_options;
 
+/*
 #if defined(ARDUINO_ARCH_AVR)    
     edit_numb(uint8_t t,const __FlashStringHelper *text,T &val,const T min=0,const T max=0,const T stp=1);
 #else
     edit_numb(uint8_t t,const char *text,T &val,const T min,const T max,const T stp);
 #endif    
-
-    T get_value(){return value;};
+*/
+    //T get_value(){return value;};
+    
+    edit_numb(uint8_t t);
+    edit_numb(uint8_t t,T &val);
+    
+    void init(T &val,const T min=0,const T max=0,const T stp=1);
+    
+    void set_min(const T min);
+    void set_max(const T max);
+    
     
     uint8_t set_next_value();
     uint8_t set_prev_value();
@@ -120,14 +146,56 @@ public:
     void set_next_step(){step *=10;};
     void set_prev_step(){step /=10;};
     void reset_step();
-    void edit(text_display *disp, uint8_t row=0, uint8_t col=0, uint8_t rows=0);
-#if defined(ARDUINO_ARCH_AVR)
-    //void strip();
-#endif    
+    //void edit(text_display *disp, uint8_t row=0, uint8_t col=0, uint8_t rows=0);
     const char *get_txt_value();
 };
 
+template <typename T>
+edit_numb<T>::edit_numb(uint8_t t):edit_item(EDT_NUMB){
+    init(0);
+}
 
+
+template <typename T>
+edit_numb<T>::edit_numb(uint8_t t,T &val):edit_item(EDT_NUMB){
+    init(val);
+}
+
+template <typename T>
+void edit_numb<T>::init(T &val,const T min,const T max,const T stp){
+    value = val;
+    if(min == 0 and max == 0){
+        min_val = 0;
+        max_val = 0;
+        set_options(NMB_CHK_LOW,0);
+        set_options(NMB_CHK_HIGH,0);
+    }
+    else{
+        min_val = min;
+        set_options(NMB_CHK_LOW);
+        if(max > min){
+            max_val = max;
+            set_options(NMB_CHK_HIGH);
+        }
+    }
+    step = stp;
+}
+
+
+template <typename T>
+void edit_numb<T>::set_min(const T min){
+    min_val = min;
+    set_options(NMB_CHK_LOW);
+}
+
+template <typename T>
+void edit_numb<T>::set_max(const T max){
+    max_val = max;
+    set_options(NMB_CHK_HIGH);
+}
+
+
+/*
 template <typename T>
 #if defined(ARDUINO_ARCH_AVR)    
 edit_numb<T>::edit_numb(uint8_t t,const __FlashStringHelper *text,T &val,const T min,const T max,const T stp):edit_item(EDT_NUMB,(const char*)text)
@@ -184,7 +252,7 @@ edit_numb<T>::edit_numb(uint8_t t,const char *text,T &val,const T min,const T ma
     cur_digit = nmb_len -1;
     edt_mode = EDT_MODE_STEP;
 }
-
+*/
 
 
 template <typename T>
@@ -212,6 +280,10 @@ const char *edit_numb<T>::get_txt_value(){
 
 template <typename T>
 uint8_t edit_numb<T>::set_next_value(){
+    if(options & NMB_CHK_HIGH == 0){
+        value += step;
+        return 0;
+    }
     value = constrain(value+step,min_val,max_val);
     if(value == max_val) return 1;
     return 0;
@@ -219,6 +291,10 @@ uint8_t edit_numb<T>::set_next_value(){
 
 template <typename T>
 uint8_t edit_numb<T>::set_prev_value(){
+    if(options & NMB_CHK_LOW == 0){
+        value -= step;
+        return 0;
+    }
     value = constrain(value-step,min_val,max_val);
     if(value == min_val)return 2;
     return 0;
@@ -232,26 +308,8 @@ void edit_numb<T>::reset_step(){
     cur_digit = nmb_len -1;
 }
 
-/*
-#if defined(ARDUINO_ARCH_AVR)
-template <typename T>
-void edit_numb<T>::strip(){
-    nmb_len = strlen(conv_buf);
-    uint8_t c = 0;
-    while(conv_buf[c] == ' ') c++;
-    if(c > 0){
-        memmove(conv_buf,&conv_buf[c],nmb_len-c+1);
-    }
-    nmb_len = strlen(conv_buf);
-    while(conv_buf[nmb_len-1] == ' '){
-        conv_buf[nmb_len-1] = '\0';
-        nmb_len--;
-        //cur_digit = 0;
-    }
-}
-#endif
-*/
 
+/*
 template <typename T>
 void edit_numb<T>::edit(text_display *disp, uint8_t row, uint8_t col, uint8_t rows){
     memset(conv_buf,0,MENU_BUF_LEN);
@@ -261,6 +319,7 @@ void edit_numb<T>::edit(text_display *disp, uint8_t row, uint8_t col, uint8_t ro
     disp->clear_row(row+1,col);
     disp->print(row+1,col,get_txt_value());
 }
+*/
 
 template <typename T>
 uint8_t edit_numb<T>::set_next_digit(){
@@ -306,6 +365,8 @@ public:
     uint8_t         cur_oct;
     uint8_t         step;
     const char      *cur_fmt;
+    
+/*    
 #if defined(ARDUINO_ARCH_AVR)
     edit_ip(const __FlashStringHelper *itm_txt,uint8_t &ip1,uint8_t &ip2,uint8_t &ip3,uint8_t &ip4);
     edit_ip(const __FlashStringHelper *itm_txt,IPAddress ip);
@@ -313,7 +374,13 @@ public:
     edit_ip(const char *itm_txt,uint8_t &ip1,uint8_t &ip2,uint8_t &ip3,uint8_t &ip4);
     edit_ip(const char *itm_txt,IPAddress ip);
 #endif
+*/    
+    edit_ip(uint8_t &ip1,uint8_t &ip2,uint8_t &ip3,uint8_t &ip4);
+    edit_ip(IPAddress ip);
+    edit_ip();
     
+    void        init(uint8_t &ip1,uint8_t &ip2,uint8_t &ip3,uint8_t &ip4);
+    void        init(IPAddress ip);
     const char  *get_txt_value();
     uint8_t     set_next_value();
     uint8_t     set_prev_value();
@@ -343,12 +410,17 @@ public:
     uint8_t     value[3];
     uint8_t     cur_val;
     uint8_t     step;
-
+/*
 #if defined(ARDUINO_ARCH_AVR)
     edit_time(const __FlashStringHelper *itm_txt,uint8_t &h,uint8_t &m,uint8_t &s);
 #else    
     edit_time(const char *itm_txt,uint8_t &h,uint8_t &m,uint8_t &s);
 #endif
+*/    
+    edit_time(uint8_t &h,uint8_t &m,uint8_t &s);
+    edit_time();
+    void init(uint8_t &h,uint8_t &m,uint8_t &s);
+    
     const char  *get_txt_value();
     uint8_t     set_next_value();
     uint8_t     set_prev_value();
@@ -409,12 +481,17 @@ public:
     uint8_t     step;
     uint8_t     fmt;
     uint8_t     sep;
-    
+
+/*    
 #if defined(ARDUINO_ARCH_AVR)
     edit_date(const __FlashStringHelper *itm_txt,uint16_t &y,uint8_t &m,uint8_t &d);
 #else
     edit_date(const char *itm_txt,uint16_t &y,uint8_t &m,uint8_t &d);
 #endif
+*/    
+    edit_date(uint16_t &y,uint8_t &m,uint8_t &d);
+    edit_date();
+    void init(uint16_t &y,uint8_t &m,uint8_t &d);
     const char  *get_txt_value();
     uint8_t     set_next_value();
     uint8_t     set_prev_value();
@@ -428,16 +505,32 @@ public:
 };
 
 
+
+typedef enum{
+    STR_NO_STRP_L   = 1, // no strip leading space
+    STR_NO_STRP_T   = 2  // no strip traling space
+} edt_str_options_t;
+
+
 const char ban_chars[] = "\"%";
 
 class edit_string:public edit_item{
 public:
-    
+/*    
 #if defined(ARDUINO_ARCH_AVR)
     edit_string(const __FlashStringHelper *itm_txt,const char *str);
 #else
     edit_string(const char *itm_txt,const char *str);
-#endif    
+#endif   
+*/    
+    edit_string(const char *str);
+    edit_string();
+    
+    void init(const char*str);
+#if defined(ARDUINO_ARCH_AVR)
+    void init(const __FlashStringHelper *str);
+#endif
+    void init(uint8_t l);  //empty string
     void strip();
     
     uint8_t set_next_value();
@@ -470,12 +563,22 @@ public:
     uint8_t     cnt;
     uint8_t     size;
 
+/*
 #if defined(ARDUINO_ARCH_AVR)
     edit_numb_list(const __FlashStringHelper *text,const T *b,uint8_t cnt):edit_item(EDT_NUMB_LIST,(const char*)text)
 #else
     edit_numb_list(const char *text,const T *b,uint8_t cnt):edit_item(EDT_NUMB_LIST,text)
 #endif
-    {
+*/
+    edit_numb_list(const T *b,uint8_t cnt):edit_item(EDT_NUMB_LIST){
+        init(b,cnt);
+    }
+    
+    edit_numb_list():edit_item(EDT_NUMB_LIST){
+        init(nullptr,0);
+    }
+    
+    void init(const T *b,uint8_t cnt){
         edt_mode = EDT_MODE_STEP;
         set_items(nullptr,cnt,0);
         disp_rows = 1;
@@ -521,11 +624,17 @@ public:
 
 class edit_list:public edit_item,public basic_menu{
 public:
+/*    
 #if defined(ARDUINO_ARCH_AVR)
     edit_list(const __FlashStringHelper *text,const char *base,uint8_t cnt,uint8_t item_l);
 #else
     edit_list(const char *text,const char *base,uint8_t cnt,uint8_t item_l);
 #endif
+*/
+    edit_list(const char *base,uint8_t cnt,uint8_t item_l);
+    edit_list();
+    
+    void init(const char *base,uint8_t cnt,uint8_t item_l);
     uint8_t set_next_value();
     uint8_t set_prev_value();
     const char *get_txt_value();
@@ -552,12 +661,17 @@ class edit_bool:public edit_item{
 public:
     bool    value;
     uint8_t style;
-    
+/*    
 #if defined(ARDUINO_ARCH_AVR)
     edit_bool(const __FlashStringHelper *text,bool &val);
 #else
     edit_bool(const char *text,bool &val);
 #endif
+*/
+    edit_bool(bool &val);
+    edit_bool();
+    
+    //void init(bool &val);
     void set_style(uint8_t s);
     uint8_t set_next_value();
     uint8_t set_prev_value();
@@ -575,6 +689,10 @@ public:
     
     edit_menu(text_display *dev);
     void            add_item(edit_item *itm);
+    void            add_item(edit_item *itm,const char *text);
+#if defined(ARDUINO_ARCH_AVR)
+    void            add_item(edit_item *itm,const __FlashStringHelper *text);
+#endif    
     //const char      *pad_txt(char *buf,const char *txt);
     void            edit_current(uint8_t lmt=0);  //0- OK  1- max_val hitted  2- min_val hitted
     uint8_t         edit_set_next();

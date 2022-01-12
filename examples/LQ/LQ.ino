@@ -18,6 +18,7 @@ LiquidCrystal lcd(8,9,4,5,6,7);
 lq_display dev(&lcd,20,4);
 edit_menu mm(&dev);
 
+/*
 int edt_var = 1234;
 float f = 1234.56;
 bool  b = true;
@@ -29,7 +30,7 @@ uint8_t s = 55;
 uint8_t day = 1;
 uint8_t month = 2;
 uint16_t year = 2019;
-
+*/
 /*
 edit_item *edt_bool = new edit_bool("bool",b);
 edit_item *edt_int = new edit_numb<int>(NMB_S_INT,"int16",edt_var,-4321,9999);
@@ -37,15 +38,21 @@ edit_item *edt_float = new edit_numb<float>(NMB_FLOAT,"float",f,1200,1300);
 edit_item *edt_list = new edit_list("list",mm_items[0],3,mm_items_len);
 */
 
+/*
 edit_bool edt_bool("bool",b);
 edit_numb<int> edt_int(NMB_S_INT,"int16",edt_var,-4321,9999);
 edit_numb<float> edt_float(NMB_FLOAT,"float",f,1200.0,1300.0);
 edit_list edt_list("list",mm_items[0],3,mm_items_len);
 edit_time edt_time("time",h,m,s);
 edit_date edt_date("date",year,month,day);
+*/
 //pb_collection btns;
 
 //push_button up = push_button(MNU_PB_UP,LOW,M_PB_UP);
+
+edit_numb<int> edt_int(NMB_S_INT,i16);//,-4321,9999);
+edit_date edt_date(year,month,day);
+edit_ip edt_ip(ip_nmb[0],ip_nmb[1],ip_nmb[2],ip_nmb[3]);
 
 void setup(){
     
@@ -65,6 +72,7 @@ void setup(){
     lcd.print("HELLO world!");
     //while(1){};
     
+    /*
     Serial.print(F("float.nmb_len : "));
     Serial.println(edt_float.nmb_len);
     Serial.print(F("float.cur_digit : "));
@@ -81,7 +89,13 @@ void setup(){
     Serial.println(edt_float.nmb_len);
     Serial.print(F("float.cur_digit : "));
     Serial.println(edt_float.cur_digit);
+    */
     
+    edt_int.set_edit_mode(EDT_MODE_DIGIT);
+    edt_date.set_fmt(DT_DMY);
+    mm.add_item(&edt_int,F("int16"));
+    mm.add_item(&edt_date,F("date"));
+    mm.add_item(&edt_ip,F("ip"));
     
    // mm.add_item(&edt_date);
     //mm.add_item(&edt_list);
@@ -93,11 +107,12 @@ void setup(){
     //mm.set_title("Main menu");
     mm.draw_menu();
     
+    /*
     Serial.print(F("float.nmb_len : "));
     Serial.println(edt_float.nmb_len);
     Serial.print(F("float.cur_digit : "));
     Serial.println(edt_float.cur_digit);
-    
+    */
     //lcd.setCursor(0,2);
     /*
     Serial.print("up.ps ");
@@ -142,10 +157,6 @@ void loop(){
             //Serial.println("M_PB_DN pressed");
             if(mm.state == EDT_STATE_MENU){
                 mm.move_next();
-    Serial.print(F("float.nmb_len : "));
-    Serial.println(edt_float.nmb_len);
-    Serial.print(F("float.cur_digit : "));
-    Serial.println(edt_float.cur_digit);
 
                 /*
                 Serial.print("mm.state = ");
@@ -167,10 +178,6 @@ void loop(){
             //Serial.println("M_PB_CH pressed");
             if(mm.state == EDT_STATE_MENU){
                 mm.edit_current();
-    Serial.print(F("float.nmb_len : "));
-    Serial.println(edt_float.nmb_len);
-    Serial.print(F("float.cur_digit : "));
-    Serial.println(edt_float.cur_digit);
                 
                 /*
                 Serial.print("mm.state = ");
