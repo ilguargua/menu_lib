@@ -91,7 +91,8 @@ uint16_t year = 2019;
 
 uint8_t ip_nmb[4] = {192,168,1,2};
 
-#if defined(ARDUINO_ARCH_AVR_STOCAZZO)
+/*
+#if defined(ARDUINO_ARCH_AVR)
 edit_ip edt_ip(F("gateway"),ip_nmb[0],ip_nmb[1],ip_nmb[2],ip_nmb[3]);
 edit_bool edt_bool(F("bool"),b);
 edit_numb<int> edt_int(NMB_S_INT,F("int16"),i16,-4321,9999);
@@ -100,7 +101,7 @@ edit_list edt_list(F("list"),mm_items[0],3,mm_items_len);
 edit_time edt_time(F("time"),h,m,s);
 edit_date edt_date(F("date"),year,month,day);
 #else
-/*
+
 edit_ip edt_ip("gateway",ip_nmb[0],ip_nmb[1],ip_nmb[2],ip_nmb[3]);
 edit_bool edt_bool("bool",b);
 edit_numb<int> edt_int(NMB_S_INT,"int16",i16,-4321,9999);
@@ -108,10 +109,10 @@ edit_numb<float> edt_float(NMB_FLOAT,"float",f,1200.0,1300.0);
 edit_list edt_list("list",mm_items[0],3,mm_items_len);
 edit_time edt_time("time",h,m,s);
 edit_date edt_date("date",year,month,day);
-*/
-#endif
 
 #endif
+*/
+#endif //ifdef DEF_EDIT_ITEMS
 
                                     
-#endif
+#endif //ifndef __TEST_DATA_H__

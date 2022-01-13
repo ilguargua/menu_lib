@@ -38,7 +38,7 @@
 
 //This is the len of memory buffer used by text_display and edit_item classes
 //Should be long at least as the numb. of char of display+1
-#define MENU_BUF_LEN 20
+#define MENU_BUF_LEN 21
 
 
 

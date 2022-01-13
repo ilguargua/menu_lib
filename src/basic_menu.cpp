@@ -16,24 +16,15 @@ basic_menu::basic_menu(){
     title = nullptr;
 }
 
-//#if defined(ARDUINO_ARCH_AVR)
-basic_menu::basic_menu(const char *base,uint8_t cnt,uint8_t item_l,uint8_t d_rows)
-//#else
-//basic_menu::basic_menu(PGM_P base,uint8_t cnt,uint8_t item_l,uint8_t d_rows)
-//#endif
-    {
+
+basic_menu::basic_menu(const char *base,uint8_t cnt,uint8_t item_l,uint8_t d_rows){
     device = nullptr;
     set_items(base,cnt,item_l);
     disp_rows = d_rows;
     title = nullptr;
 }
 
-//#if defined(ARDUINO_ARCH_AVR)
-//basic_menu::basic_menu(text_display *dev,PGM_P base,uint8_t cnt,uint8_t item_l,uint8_t d_rows)
-//#else
-basic_menu::basic_menu(text_display *dev,const char *base,uint8_t cnt,uint8_t item_l,uint8_t d_rows)
-//#endif
-    {
+basic_menu::basic_menu(text_display *dev,const char *base,uint8_t cnt,uint8_t item_l,uint8_t d_rows){
     device = dev;
     set_items(base,cnt,item_l);
     disp_rows = d_rows;
@@ -119,12 +110,7 @@ text_display *basic_menu::new_device(uint8_t dev_type,void *dev){
 }
 */
 
-//#if defined(ARDUINO_ARCH_AVR)
-//void basic_menu::set_items(PGM_P base,uint8_t cnt,uint8_t item_l)
-//#else
-void basic_menu::set_items(const char *base,uint8_t cnt,uint8_t item_l)
-//#endif
-{
+void basic_menu::set_items(const char *base,uint8_t cnt,uint8_t item_l){
     items.base = base;
     items.cnt = cnt;
     items.len = item_l+1;
@@ -176,13 +162,7 @@ void basic_menu::move_prev(){
     draw_menu();
 }
 
-//#if defined(ARDUINO_ARCH_AVR)
-//PGM_P basic_menu::get_row(uint8_t row)
-//#else
-const char *basic_menu::get_row(uint8_t row)
-//#endif
-{
-    //if(row > this->item_cnt-1) row = this->item_cnt - 1;
+const char *basic_menu::get_row(uint8_t row){
     uint8_t r = constrain(row+start_item,0,items.cnt-1);
 #if defined(ARDUINO_ARCH_AVR)
     memset(avr_buf,0,MENU_BUF_LEN);
@@ -236,13 +216,7 @@ void basic_menu::draw_menu(){
         if(i == get_cur_row()+start) rev = 1;
         else rev = 0;
         if(options | M_PRINT_CLEAR) device->clear_row(i,0);//,strlen(itm));//items.len);
-//#if defined(ARDUINO_ARCH_AVR)
-//        memset(avr_buf,0,MENU_BUF_LEN);
-//        strlcpy_P(avr_buf,get_row(i-start),MENU_BUF_LEN);
-//        device->print(i,0,avr_buf,rev);
-//#else
         device->print(i,0,get_row(i-start),rev);
-//#endif
     }
     device->refresh();
 }

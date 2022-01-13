@@ -51,6 +51,7 @@ edit_date edt_date("date",year,month,day);
 //push_button up = push_button(MNU_PB_UP,LOW,M_PB_UP);
 
 edit_numb<int> edt_int(NMB_S_INT,i16);//,-4321,9999);
+edit_numb<float> edt_float(NMB_FLOAT,f);//,1200.0,1300.0);
 edit_date edt_date(year,month,day);
 edit_ip edt_ip(ip_nmb[0],ip_nmb[1],ip_nmb[2],ip_nmb[3]);
 
@@ -91,11 +92,23 @@ void setup(){
     Serial.println(edt_float.cur_digit);
     */
     
-    edt_int.set_edit_mode(EDT_MODE_DIGIT);
+    edt_float.set_edit_mode(EDT_MODE_DIGIT);
+    //edt_int.set_edit_mode(EDT_MODE_DIGIT);
+    edt_int.set_min(1000);
+    edt_int.set_step(10);
     edt_date.set_fmt(DT_DMY);
+    Serial.print(F("int options : "));
+    Serial.println(edt_int.options);
+    Serial.print(F("float.value : "));
+    Serial.println(edt_float.value,2);
+    dtostrf(edt_float.value,-19,2,buf);
+    Serial.println(buf);
+    Serial.println(edt_float.get_txt_value());
+    
     mm.add_item(&edt_int,F("int16"));
     mm.add_item(&edt_date,F("date"));
     mm.add_item(&edt_ip,F("ip"));
+    mm.add_item(&edt_float,F("float"));
     
    // mm.add_item(&edt_date);
     //mm.add_item(&edt_list);
