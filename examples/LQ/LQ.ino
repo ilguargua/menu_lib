@@ -55,6 +55,8 @@ edit_numb<float> edt_float(NMB_FLOAT,f);//,1200.0,1300.0);
 edit_date edt_date(year,month,day);
 edit_ip edt_ip(ip_nmb[0],ip_nmb[1],ip_nmb[2],ip_nmb[3]);
 
+edit_item   *cur_item = nullptr;
+
 void setup(){
     
     Serial.begin(115200);
@@ -97,12 +99,12 @@ void setup(){
     edt_int.set_min(1000);
     edt_int.set_step(10);
     edt_date.set_fmt(DT_DMY);
-    Serial.print(F("int options : "));
-    Serial.println(edt_int.options);
-    Serial.print(F("float.value : "));
-    Serial.println(edt_float.value,2);
-    dtostrf(edt_float.value,-19,2,buf);
-    Serial.println(buf);
+    //Serial.print(F("int options : "));
+    //Serial.println(edt_int.options);
+    Serial.print(F("float.cur_digit : "));
+    Serial.println(edt_float.cur_digit);
+    //dtostrf(edt_float.value,-19,2,buf);
+    //Serial.println(buf);
     Serial.println(edt_float.get_txt_value());
     
     mm.add_item(&edt_int,F("int16"));
@@ -110,7 +112,13 @@ void setup(){
     mm.add_item(&edt_ip,F("ip"));
     mm.add_item(&edt_float,F("float"));
     
-   // mm.add_item(&edt_date);
+    cur_item = &edt_date;
+    edit_cur_item();
+    Serial.print(F("*float.cur_digit : "));
+    Serial.println(edt_float.cur_digit);
+    
+    //while(1){};
+    // mm.add_item(&edt_date);
     //mm.add_item(&edt_list);
     //mm.set_device(&dev);
     //mm.set_items(mm_items[0],mm_items_cnt,mm_items_len);
@@ -118,7 +126,7 @@ void setup(){
     //mm.set_rows(1);
     //mm.set_rows(4);
     //mm.set_title("Main menu");
-    mm.draw_menu();
+    //mm.draw_menu();
     
     /*
     Serial.print(F("float.nmb_len : "));
@@ -143,74 +151,102 @@ void setup(){
 
 
 void loop(){
+    edit_item_loop();
     
+}
+
+
+void edit_item_loop(){
     switch(chk_pb()){
-    //switch(btns.get_btns_status()){
+        case M_PB_UP:
+            cur_item->set_next_value();
+            edit_cur_item();
+            break;
+        case M_PB_DN:
+            cur_item->set_prev_value();
+            edit_cur_item();
+            break;
+        case M_PB_CH:
+            if(cur_item->edt_mode == EDT_MODE_STEP){
+                dev.clear_display();
+                //cur_item->reset_step();
+            }
+            else{
+                if(cur_item->set_next_digit()){ 
+                    edit_cur_item();
+                }
+                else{ 
+                    dev.clear_display();
+                    cur_item->reset_step();
+                }
+            }
+            break;
+        case M_PB_BK:
+            //Serial.println(F("M_PB_BK pressed"));
+            if(cur_item->edt_mode == EDT_MODE_DIGIT){
+                if(cur_item->set_prev_digit()){ 
+                    edit_cur_item();
+                }
+                else{
+                    dev.clear_display();
+                    cur_item->reset_step();
+                }
+            }
+            break;
+        
+    }
+    
+}
+
+
+void edit_cur_item(){
+    if(cur_item != nullptr) cur_item->edit(&dev,2,0,0,1);
+}
+
+void edit_menu_loop(){
+    switch(chk_pb()){
         case M_PB_UP:
             //Serial.println("M_PB_UP pressed");
             if(mm.state == EDT_STATE_MENU){ 
                 mm.move_prev();
-                /*
-                Serial.print("mm.state = ");
-                Serial.println(mm.state);
-                Serial.println("mm.move_prev()");
-                */
             }
             else{ 
                 mm.edit_set_next();
-                /*
-                Serial.print("mm.state = ");
-                Serial.println(mm.state);
-                Serial.println("mm.edit_set_next()");
-                */
             }
-            //Serial.println();
             break;
         case M_PB_DN:
             //Serial.println("M_PB_DN pressed");
             if(mm.state == EDT_STATE_MENU){
                 mm.move_next();
-
-                /*
-                Serial.print("mm.state = ");
-                Serial.println(mm.state);
-                Serial.println("mm.move_next()");
-                */
             }
             else{ 
                 mm.edit_set_prev();
-                /*
-                Serial.print("mm.state = ");
-                Serial.println(mm.state);
-                Serial.println("mm.edit_set_prev()");
-                */
             }
-            //Serial.println();
             break;
         case M_PB_CH:
             //Serial.println("M_PB_CH pressed");
             if(mm.state == EDT_STATE_MENU){
                 mm.edit_current();
-                
-                /*
-                Serial.print("mm.state = ");
-                Serial.println(mm.state);
-                Serial.println("mm.edit_current()");
-                */
             }
             else{
                 if(mm.set_next_digit()){ 
                     mm.edit_current();
-                    //Serial.println("mm.set_next_digit() true");
-                    //Serial.println("mm.edit_current()");
                 }
                 else{ 
                     mm.draw_menu();
-                    //Serial.println("mm.set_next_digit() false");
-                    //Serial.println("mm.draw_menu()");
                 }
             }
-            //Serial.println();
+            break;
+        case M_PB_BK:
+            //Serial.println(F("M_PB_BK pressed"));
+            if(mm.state == EDT_STATE_EDIT){
+                if(mm.set_prev_digit()){ 
+                    mm.edit_current();
+                }
+                else{
+                    mm.draw_menu();
+                }
+            }
             break;
         
     }
@@ -250,6 +286,17 @@ int chk_pb(){
         if(st[2] == LOW){
             st[2] = HIGH;
             return M_PB_CH;
+        }
+    }
+
+    if(digitalRead(MNU_PB_BK) == LOW) {
+        if(st[3] == HIGH) st[3] = LOW;
+        return M_PB_NONE;
+    }
+    else{
+        if(st[3] == LOW){
+            st[3] = HIGH;
+            return M_PB_BK;
         }
     }
     

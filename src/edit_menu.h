@@ -65,7 +65,6 @@ class edit_item{
 public:
     uint8_t     type;       //edt_type_t
     
-    
     const char  *txt;
     char        conv_buf[MENU_BUF_LEN];
     uint8_t     cur_digit;
@@ -79,12 +78,12 @@ public:
     void                set_txt(const __FlashStringHelper *text){txt = (const char*) text;};
 #endif
     void                set_txt(const char *text){txt = text;};
-    
     void                set_options(uint8_t opt,uint8_t set=1);
-    void                edit(text_display *device, uint8_t row, uint8_t col,uint8_t max_len);
+    void                edit(text_display *device, uint8_t row, uint8_t col,uint8_t max_len,uint8_t no_txt=0);
     void                set_edit_mode(uint8_t m){edt_mode = m;};
     const char          *get_menu_line(uint8_t max_len,uint8_t lmt,uint8_t txt_only=0);
     virtual uint8_t     set_next_digit(){return 0;};
+    virtual uint8_t     set_prev_digit(){return 0;};
     virtual uint8_t     set_next_value(){return 0;};
     virtual uint8_t     set_prev_value(){return 0;};
     virtual void        set_next_step(){};
@@ -126,6 +125,7 @@ public:
     uint8_t     set_next_value();
     uint8_t     set_prev_value();
     uint8_t     set_next_digit();
+    uint8_t     set_prev_digit();
     void        set_step(T stp){step=stp;};
     void        set_next_step(){step *=10;};
     void        set_prev_step(){step /=10;};
@@ -164,6 +164,7 @@ void edit_numb<T>::init(T &val,const T min,const T max,const T stp){
         }
     }
     step = stp;
+    reset_step();
 }
 
 
@@ -301,7 +302,7 @@ template <typename T>
 void edit_numb<T>::reset_step(){
     if(n_type == NMB_FLOAT) step = .01;
     else step = 1;
-    nmb_len = strlen(get_txt_value());
+    get_txt_value();
     cur_digit = nmb_len -1;
 }
 
@@ -321,6 +322,18 @@ uint8_t edit_numb<T>::set_next_digit(){
     return 1;
 }
 
+template <typename T>
+uint8_t edit_numb<T>::set_prev_digit(){
+    get_txt_value();
+    if(cur_digit < nmb_len-1) cur_digit++;
+    else return 0;
+    if(conv_buf[cur_digit] == '.'){
+        if(cur_digit < nmb_len-1) cur_digit++;
+        else return 0;
+    } 
+    set_prev_step();    
+    return 1;
+}
 
 
 #if defined(ARDUINO_ARCH_AVR) 
@@ -330,7 +343,7 @@ const PROGMEM char      ip_edt_fmt[] = "%03u:%03u:%03u:%03u";
 const char      ip_txt_fmt[] = "%3u:%3u:%3u:%3u";
 const char      ip_edt_fmt[] = "%03u:%03u:%03u:%03u";
 #endif
-const uint8_t   ip_fmt_len = 14;
+#define   IP_FMT_LEN  14
 
 
 class edit_ip:public edit_item{
@@ -354,6 +367,7 @@ public:
     void        set_prev_step(){step /=10;};
     void        reset_step(){step = 1;cur_fmt = ip_edt_fmt;};
     uint8_t     set_next_digit();
+    uint8_t     set_prev_digit();
     
 };
 
@@ -369,7 +383,8 @@ const PROGMEM char  time_fmt[] = "%02u:%02u:%02u";
 #else
 const char  time_fmt[] = "%02u:%02u:%02u";
 #endif
-const uint8_t time_fmt_len = 7;
+
+#define TIME_FMT_LEN    7
 
 class edit_time:public edit_item{
 public:
@@ -388,7 +403,7 @@ public:
     void        set_prev_step(){step /=10;};
     void        reset_step(){step = 1;};
     uint8_t     set_next_digit();
-    
+    uint8_t     set_prev_digit();
 };
 
 
@@ -416,7 +431,8 @@ typedef enum{
 const char date_sep[] = "/\\-;:";
 
 
-const uint8_t date_fmt_len = 9;
+
+#define DATE_FMT_LEN    9
 
 #if defined(ARDUINO_ARCH_AVR)
 const PROGMEM char  date_fmt[][16] = {"%4u%c%02u%c%02u",
@@ -438,7 +454,7 @@ class edit_date:public edit_item{
 public:
     uint16_t    value[3];
     uint8_t     cur_val;
-    uint8_t     step;
+    uint16_t    step;
     uint8_t     fmt;
     uint8_t     sep;
 
@@ -453,6 +469,7 @@ public:
     void        set_prev_step(){step /=10;};
     void        reset_step(){step = 1;};
     uint8_t     set_next_digit();
+    uint8_t     set_prev_digit();
     void        set_fmt(uint8_t f);
     void        set_sep(uint8_t s);
     
@@ -483,6 +500,7 @@ public:
     uint8_t     set_next_value();
     uint8_t     set_prev_value();
     uint8_t     set_next_digit();
+    uint8_t     set_prev_digit();
     const char  *get_txt_value();
     void        reset_step(){cur_digit = 0;}
     
@@ -608,6 +626,7 @@ public:
     uint8_t         edit_set_next();
     uint8_t         edit_set_prev();
     uint8_t         set_next_digit();
+    uint8_t         set_prev_digit();
     const char      *get_row(uint8_t row);
 
     

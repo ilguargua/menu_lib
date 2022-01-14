@@ -32,21 +32,25 @@ const char * edit_item::get_menu_line(uint8_t max_len,uint8_t lmt,uint8_t txt_on
 }
 
 
-void edit_item::edit(text_display *device, uint8_t row, uint8_t col,uint8_t max_len){
+void edit_item::edit(text_display *device, uint8_t row, uint8_t col,uint8_t max_len,uint8_t no_txt){
     uint8_t av_cols = min(MENU_BUF_LEN,device->cols);
     uint8_t val_len = strlen(get_txt_value());
+    uint8_t pr_col = av_cols-val_len-1;
     device->clear_row(row,0);
-    uint8_t txt_len = strlen(get_menu_line(max_len,av_cols,1));
-    if(txt_len > av_cols-val_len-2) conv_buf[av_cols-val_len-3]=0;
-    device->print(row,col,conv_buf);
+    if(no_txt == 0){
+        uint8_t txt_len = strlen(get_menu_line(max_len,av_cols,1));
+        if(txt_len > av_cols-val_len-2) conv_buf[av_cols-val_len-3]=0;
+        device->print(row,col,conv_buf);
+    }
+    else pr_col = col;
     if(edt_mode == EDT_MODE_STEP){
-        device->print(row,av_cols-val_len-1,get_txt_value(),1);
+        device->print(row,pr_col,get_txt_value(),1);
     }
     else{
-        device->print(row,av_cols-val_len-1,get_txt_value());
+        device->print(row,pr_col,get_txt_value());
         char b[2] = {'\0','\0'};
         b[0] = get_txt_value()[cur_digit];
-        device->print(row,(av_cols-val_len-1)+cur_digit,b,2);
+        device->print(row,pr_col+cur_digit,b,2);
     }
     
     
@@ -78,7 +82,7 @@ void edit_ip::init(uint8_t &ip1,uint8_t &ip2,uint8_t &ip3,uint8_t &ip4){
     value[1] = ip3;
     value[0] = ip4;
     cur_oct = 0;
-    cur_digit = 14;
+    cur_digit = IP_FMT_LEN;
     step = 1;
     edt_mode = EDT_MODE_DIGIT;
     memset(conv_buf,0,MENU_BUF_LEN);
@@ -109,13 +113,12 @@ uint8_t edit_ip::set_prev_value(){
 }
 
 uint8_t edit_ip::set_next_digit(){
-    
     if(cur_digit > 0) cur_digit--;
     else{
         cur_fmt = ip_txt_fmt;
         get_txt_value();
         cur_oct = 0;
-        cur_digit = 14;
+        cur_digit = IP_FMT_LEN;
         return 0;
     }
     if(conv_buf[cur_digit] == ':'){
@@ -124,6 +127,25 @@ uint8_t edit_ip::set_next_digit(){
         reset_step();
     }
     else set_next_step();
+    return 1;
+}
+
+uint8_t edit_ip::set_prev_digit(){
+    if(cur_digit < IP_FMT_LEN) cur_digit++;
+    else{
+        cur_fmt = ip_txt_fmt;
+        get_txt_value();
+        cur_oct = 0;
+        cur_digit = IP_FMT_LEN;
+        return 0;
+    }
+    if(conv_buf[cur_digit] == ':'){
+        cur_digit++;
+        cur_oct--;
+        //reset_step();
+        step = 100;
+    }
+    else set_prev_step();
     return 1;
 }
 
@@ -139,7 +161,7 @@ edit_time::edit_time():edit_item(EDT_TIME){
     value[TM_MIN] = 0;
     value[TM_SEC] = 0;
     cur_val = TM_SEC;
-    cur_digit = time_fmt_len;
+    cur_digit = TIME_FMT_LEN;
     step = 1;
     edt_mode = EDT_MODE_DIGIT;
     memset(conv_buf,0,MENU_BUF_LEN);
@@ -150,7 +172,7 @@ void edit_time::init(uint8_t &h,uint8_t &m,uint8_t &s){
     value[TM_MIN] = m;
     value[TM_SEC] = s;
     cur_val = TM_SEC;
-    cur_digit = time_fmt_len;
+    cur_digit = TIME_FMT_LEN;
     step = 1;
     edt_mode = EDT_MODE_DIGIT;
     memset(conv_buf,0,MENU_BUF_LEN);
@@ -200,13 +222,11 @@ uint8_t edit_time::set_prev_value(){
 }
 
 uint8_t edit_time::set_next_digit(){
-    
     if(cur_digit > 0) cur_digit--;
     else{
-        //cur_fmt = ip_txt_fmt;
         get_txt_value();
-        cur_val = 0;
-        cur_digit = time_fmt_len;
+        cur_val = TM_SEC;
+        cur_digit = TIME_FMT_LEN;
         return 0;
     }
     if(conv_buf[cur_digit] == ':'){
@@ -217,6 +237,25 @@ uint8_t edit_time::set_next_digit(){
     else set_next_step();
     return 1;
 }
+
+uint8_t edit_time::set_prev_digit(){
+    if(cur_digit < TIME_FMT_LEN) cur_digit++;
+    else{
+        get_txt_value();
+        cur_val = TM_SEC;
+        cur_digit = TIME_FMT_LEN;
+        return 0;
+    }
+    if(conv_buf[cur_digit] == ':'){
+        cur_digit++;
+        cur_val++;
+        step = 10;
+    }
+    else set_prev_step();
+    return 1;
+}
+
+
 
 /********************************************************************************/
 
@@ -234,7 +273,7 @@ edit_date::edit_date():edit_item(EDT_DATE){
     fmt = DT_YMD;
     sep = DT_SEP_SLASH;
     cur_val = DT_DAY;
-    cur_digit = date_fmt_len;
+    cur_digit = DATE_FMT_LEN;
     step = 1;
     edt_mode = EDT_MODE_DIGIT;
     memset(conv_buf,0,MENU_BUF_LEN);
@@ -248,7 +287,7 @@ void edit_date::init(uint16_t &y,uint8_t &m,uint8_t &d){
     fmt = DT_YMD;
     sep = DT_SEP_SLASH;
     cur_val = DT_DAY;
-    cur_digit = date_fmt_len;
+    cur_digit = DATE_FMT_LEN;
     step = 1;
     edt_mode = EDT_MODE_DIGIT;
     memset(conv_buf,0,MENU_BUF_LEN);
@@ -319,7 +358,7 @@ uint8_t edit_date::set_next_digit(){
                 break;
         }
         
-        cur_digit = date_fmt_len;
+        cur_digit = DATE_FMT_LEN;
         return 0;
     }
     if(conv_buf[cur_digit] == date_sep[sep]){
@@ -355,6 +394,62 @@ uint8_t edit_date::set_next_digit(){
     else set_next_step();
     return 1;
 }
+
+
+uint8_t edit_date::set_prev_digit(){
+    
+    if(cur_digit < DATE_FMT_LEN) cur_digit++;
+    else{
+        get_txt_value();
+        switch(fmt){
+            case DT_YMD:
+                cur_val = DT_DAY;
+                break;
+            case DT_DMY:
+            case DT_MDY:    
+                cur_val = DT_YEAR;
+                break;
+        }
+        
+        cur_digit = DATE_FMT_LEN;
+        return 0;
+    }
+    if(conv_buf[cur_digit] == date_sep[sep]){
+        cur_digit++;
+        switch(cur_val){
+            case DT_YEAR:
+                cur_val = DT_MONTH;
+                step = 10;
+                break;
+            case DT_MONTH:
+                switch(fmt){
+                    case DT_YMD:
+                    case DT_MDY:
+                        cur_val = DT_DAY;
+                        step = 10;
+                        break;
+                    case DT_DMY:
+                        cur_val = DT_YEAR;
+                        step = 1000;
+                        break;
+                }
+                break;
+            case DT_DAY:
+                if(fmt == DT_DMY){ 
+                    cur_val = DT_MONTH;
+                    step = 10;
+                }
+                else{
+                    cur_val = DT_YEAR;
+                    step = 1000;
+                }
+                break;
+        }
+    }
+    else set_prev_step();
+    return 1;
+}
+
 
 
 uint8_t edit_date::set_next_value(){
@@ -483,6 +578,14 @@ uint8_t edit_string::set_next_digit(){
     else return 0;
     return 1;
 };
+
+uint8_t edit_string::set_prev_digit(){
+    get_txt_value();
+    if(cur_digit > 0) cur_digit--;
+    else return 0;
+    return 1;
+};
+
 
 const char * edit_string::get_txt_value(){
     nmb_len = strlen(conv_buf);
@@ -618,6 +721,12 @@ const char *edit_menu::get_row(uint8_t row){
 
 uint8_t edit_menu::set_next_digit(){
     uint8_t r = edt_items[cur_item]->set_next_digit();
+    if(r == 0) state = EDT_STATE_MENU;
+    return r;
+}
+
+uint8_t edit_menu::set_prev_digit(){
+    uint8_t r = edt_items[cur_item]->set_prev_digit();
     if(r == 0) state = EDT_STATE_MENU;
     return r;
 }
