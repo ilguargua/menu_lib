@@ -12,7 +12,7 @@ nextion_display::nextion_display(){
     font = 0;
     d_cols = 0;
     d_rows = 0;
-    
+    options = 0;
 }
 
 nextion_display::nextion_display(Stream *disp,uint8_t r,uint8_t c,uint8_t f_ndx,uint8_t f_h,uint8_t f_l){
@@ -40,11 +40,26 @@ void nextion_display::init(Stream *disp,uint8_t r,uint8_t c,uint8_t f_ndx,uint8_
         menu_x = (((d_cols-cols)/2)*f_w)+1;
     }
     else menu_x = 1;
-    
+    options = 0;
 
 };
 
+void nextion_display::set_options(uint8_t opts,uint8_t set){
+    if(set > 0) options |= opts;
+    else //options ^= opts;    
+    {
+        if(options & opts) options -= opts;
+    }
+}
+
+
 void nextion_display::print(uint8_t row,uint8_t col,const char *txt,uint8_t rev){
+    if(options & NXT_PROP_FONT) print_prop(row,col,txt,rev);
+    else print_mono(row,col,txt,rev);
+}
+
+void nextion_display::print_mono(uint8_t row,uint8_t col,const char *txt,uint8_t rev){
+    if(ser == nullptr) return;
     uint16_t fg = rev > 0 ? NXT_BG_COLOR : NXT_FG_COLOR;
     uint16_t bg = rev == 0 ? NXT_BG_COLOR : NXT_FG_COLOR;
     memset(nxt_buf,0,NXT_BUF_SIZE);
@@ -66,8 +81,71 @@ void nextion_display::print(uint8_t row,uint8_t col,const char *txt,uint8_t rev)
     ser->print(nxt_buf);
 }
 
+void nextion_display::print_prop(uint8_t row,uint8_t col,const char *txt,uint8_t rev){
+    if(ser == nullptr) return;
+    uint16_t fg = rev > 0 ? NXT_BG_COLOR : NXT_FG_COLOR;
+    uint16_t bg = rev == 0 ? NXT_BG_COLOR : NXT_FG_COLOR;
+    uint8_t l = strlen(txt);
+    char b[2] = {0,0};
+    uint16_t msg_size = 0;
+    memset(nxt_buf,0,NXT_BUF_SIZE);
+#if defined(ARDUINO_ARCH_AVR)    
+    snprintf_P(nxt_buf,NXT_BUF_SIZE-1,COM_STOP,NXT_MSG_END);
+#else
+    snprintf(nxt_buf,NXT_BUF_SIZE-1,COM_STOP,NXT_MSG_END);
+#endif             
+    ser->print(nxt_buf);
+    
+    for(uint8_t i=0;i<l;i++){
+        b[0] = txt[i];
+        memset(nxt_buf,0,NXT_BUF_SIZE);
+#if defined(ARDUINO_ARCH_AVR)    
+        snprintf_P(nxt_buf,NXT_BUF_SIZE-1,XSTR_FMT,
+#else
+        snprintf(nxt_buf,NXT_BUF_SIZE-1,XSTR_FMT,
+                            #endif             
+                            menu_x+2+(i*col_l)+(col *col_l),
+                            menu_y+(row*row_h)+2,
+                            col_l,
+                            row_h-2,
+                            font,
+                            fg,
+                            bg,
+                            b,
+                            NXT_MSG_END
+        );
+        //msg_size += strlen(nxt_buf);
+        if((msg_size+strlen(nxt_buf)+20) > NXT_COM_SIZE){
+            ser->print("com_star");
+            ser->write(0xFF);
+            ser->write(0xFF);
+            ser->write(0xFF);
+            delay(50);
+            ser->print("com_stop");
+            ser->write(0xFF);
+            ser->write(0xFF);
+            ser->write(0xFF);
+            msg_size = 0;
+        } 
+        else msg_size += strlen(nxt_buf);
+        //Serial.println(nxt_buf);
+        ser->print(nxt_buf);
+        //delay(100);
+    }
+    memset(nxt_buf,0,NXT_BUF_SIZE);
+#if defined(ARDUINO_ARCH_AVR)    
+    snprintf_P(nxt_buf,NXT_BUF_SIZE-1,COM_START,NXT_MSG_END);
+#else
+    snprintf(nxt_buf,NXT_BUF_SIZE-1,COM_START,NXT_MSG_END);
+#endif             
+    ser->print(nxt_buf);
+    delay(10);
+}
+
+
 
 void nextion_display::clear_row(uint8_t row,uint8_t col, uint8_t w,uint8_t rev){
+    if(ser == nullptr) return;
     uint16_t fc = rev == 0 ? NXT_BG_COLOR : NXT_FG_COLOR;
     if(w == 0) w = cols - col ; //default to end of line
     memset(nxt_buf,0,NXT_BUF_SIZE);
@@ -88,13 +166,16 @@ void nextion_display::clear_row(uint8_t row,uint8_t col, uint8_t w,uint8_t rev){
 
 
 void nextion_display::clear_display(){
-    memset(nxt_buf,0,NXT_BUF_SIZE);
+    if(ser == nullptr) return;
+    if(options & NXT_LOCK){
+        memset(nxt_buf,0,NXT_BUF_SIZE);
 #if defined(ARDUINO_ARCH_AVR)            
-    snprintf_P(nxt_buf,NXT_BUF_SIZE-1,TOFF_FMT,NXT_MSG_END);
+        snprintf_P(nxt_buf,NXT_BUF_SIZE-1,TOFF_FMT,NXT_MSG_END);
 #else
-    snprintf(nxt_buf,NXT_BUF_SIZE-1,TOFF_FMT,NXT_MSG_END);
+        snprintf(nxt_buf,NXT_BUF_SIZE-1,TOFF_FMT,NXT_MSG_END);
 #endif    
-    ser->print(nxt_buf);
+        ser->print(nxt_buf);
+    }
     memset(nxt_buf,0,NXT_BUF_SIZE);
 #if defined(ARDUINO_ARCH_AVR)    
     snprintf_P(nxt_buf,NXT_BUF_SIZE-1,FILL_FMT,
@@ -127,6 +208,7 @@ void nextion_display::clear_display(){
 
 
 uint16_t nextion_display::get_nextion_data(char d){
+    if(ser == nullptr) return 0;
     uint8_t     cnt = 0;
     char        b = 0;
     memset(nxt_buf,0,NXT_BUF_SIZE);
@@ -154,6 +236,7 @@ uint16_t nextion_display::get_nextion_data(char d){
 }
 
 void nextion_display::restore_display(){
+    if(ser == nullptr) return;
     memset(nxt_buf,0,NXT_BUF_SIZE);
 #if defined(ARDUINO_ARCH_AVR)    
     snprintf_P(nxt_buf,NXT_BUF_SIZE-1,REF_FMT,NXT_MSG_END);
@@ -161,14 +244,15 @@ void nextion_display::restore_display(){
     snprintf(nxt_buf,NXT_BUF_SIZE-1,REF_FMT,NXT_MSG_END);
 #endif    
     ser->print(nxt_buf);
-    memset(nxt_buf,0,NXT_BUF_SIZE);
+    if(options & NXT_LOCK){
+        memset(nxt_buf,0,NXT_BUF_SIZE);
 #if defined(ARDUINO_ARCH_AVR)    
-    snprintf_P(nxt_buf,NXT_BUF_SIZE-1,TON_FMT,NXT_MSG_END);
+        snprintf_P(nxt_buf,NXT_BUF_SIZE-1,TON_FMT,NXT_MSG_END);
 #else
-    snprintf(nxt_buf,NXT_BUF_SIZE-1,TON_FMT,NXT_MSG_END);
+        snprintf(nxt_buf,NXT_BUF_SIZE-1,TON_FMT,NXT_MSG_END);
 #endif    
-    ser->print(nxt_buf);
-    
+        ser->print(nxt_buf);
+    }
 }
 
 #endif

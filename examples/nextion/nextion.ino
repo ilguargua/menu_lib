@@ -1,146 +1,91 @@
 /*
- * basic_menu test using a Nextion interface
- * 02/12/2021
+ * simple test to check a Nextion interface
+ * 
  */
 
 
 
 
 #include <SoftwareSerial.h>
-#include <basic_menu.h>
-#include <edit_menu.h>
 #include <nextion_display.h>
-#include <test_data.h>
-//#include <u8x8_display.h>
 
 
+#define DRAW_LINE_FMT   PSTR("line %i,%i,%i,%i,65504%c%c%c")   
+#define CMD_BUF_LEN     60
+#define FONT_W          12
+#define FONT_H          14
+#define RLR_PTC         (FONT_W / 2)
+
+//Serial interface for nextion connection
+//Can be any valid hardware/software serial port
 SoftwareSerial intf(10,11);  //we use software serial for display, so Serial can be used for debug
                              //In this case: blu wire to pin 10, yellow wire to pin 11 
 
 
-basic_menu bm;
+//text_display instance,will be initialized in setup
 nextion_display disp;
-
-//const PROGMEM uint32_t  ser_br[]={1200,2400,4800,9600,19200,38400,57600,74880,115200,230400};
-//uint32_t  ser_br[]={1200,2400,4800,9600,19200,38400,57600,74880,115200,230400};
-//uint32_t  tt = 1234;
-
-//U8X8_SSD1306_128X64_NONAME_HW_I2C  u8x8_dev;
-
-//u8x8_display  disp;
-
-edit_menu mm(&disp);
-
-edit_ip edt_ip(PSTR("gateway"),ip_nmb[0],ip_nmb[1],ip_nmb[2],ip_nmb[3]);
 
 
 
 void setup(){
-    char buf[60];
-    memset(buf,0,40);
+    //buffer used for various commands
+    char buf[CMD_BUF_LEN];
+    memset(buf,0,CMD_BUF_LEN);
+    
+    //Nextion serial port init
     intf.begin(38400);  //This have to match the nextion baudrate
     
-    //basic_menu bm;
+    //If we need for debug
     Serial.begin(115200);
     Serial.println("Program begin..");
-    //pinMode(13,INPUT_PULLUP);
-    //pinMode(13,OUTPUT);
-    delay(500);
-    //digitalWrite(13,HIGH);
     
-    //set input buttons
-    pinMode(MNU_PB_UP,INPUT);
-    pinMode(MNU_PB_DN,INPUT);
-    pinMode(MNU_PB_CH,INPUT);
-
-
-    disp.init(&intf,5,16,0,14,8);
-    snprintf_P(buf,40,PSTR("rest%c%c%c"),NXT_MSG_END);
+    //text_display init, parameters are: serial port,rows,cols,font index,font height,font width
+    disp.init(&intf,10,25,1,FONT_H,FONT_W);
+    
+    //use this if the font is a proportional font (not monospace)
+    //this is mandatory for editing, not needed in menu
+    disp.set_options(NXT_PROP_FONT);
+    
+    //we reset the display, useful for testing connection
+    snprintf_P(buf,CMD_BUF_LEN,PSTR("rest%c%c%c"),NXT_MSG_END);
     intf.print(buf);
     delay(1000);
     
+    uint16_t x_st = disp.menu_x+2;
+    uint16_t y_st = disp.menu_y+2;
+    uint16_t line_end = x_st+(FONT_W * 22);
     
-    //edt_float.set_edit_mode(EDT_MODE_DIGIT);
-    //edt_int.set_edit_mode(EDT_MODE_DIGIT);
-    //edt_date.set_fmt(DT_DMY);
-    
-    //mm.add_item(&edt_time);
-    //mm.add_item(&edt_date);
-    //mm.add_item(&edt_bool);
-    //mm.add_item(&edt_int);
-    //mm.add_item(&edt_float);
-    //mm.add_item(&edt_list);
-    
-    
-    
-    
-    /*
-    memset(buf,0,40);
-    snprintf(buf,40,"b[3].val=50%c%c%c",NXT_MSG_END);
-    intf.print(buf);
-    */
-    //while(1){};
-    
-    /*
-    Serial.print("d_rows : ");
-    Serial.println(disp.d_rows);
-    Serial.print("d_cols : ");
-    Serial.println(disp.d_cols);
-    */
-    //memset(buf,0,60);
-    //snprintf(buf,60,"xstr 121,73,50,18,0,0,65535,1,1,1,\"hello\"%c%c%c",NXT_MSG_END);
-    //intf.print(buf);
-    
+    //we init the display area
     disp.clear_display();
-    //Serial.print("conv_buf : ");
-    //Serial.println(disp.conv_buf);
     
-    //disp.print(0,0,"hello");
-    
-    mm.set_options(M_PRINT_CLEAR);
-    //mm.set_rows(1);
-    mm.set_rows(6);
-    //mm.set_title("Main menu");
-    mm.draw_menu();
-    
-    /*
-    for(uint8_t i=0;i<mm.items.cnt;i++){
-        Serial.print("mm.edt_items[");
-        Serial.print(i);
-        Serial.print("].conv_buf = >");
-        Serial.print(mm.edt_items[i]->conv_buf);
-        Serial.println("<");
+    //print something on screen (in reverse)
+    disp.print(0,0,"Hello world 1234567890",1);
+
+    //draw a ruler on screen, useful to understand font size
+    //short pitch are at font width/2, long pitch at font width
+    memset(buf,0,CMD_BUF_LEN);
+    snprintf_P(buf,CMD_BUF_LEN,DRAW_LINE_FMT,x_st,y_st+16,line_end,y_st+16,NXT_MSG_END);
+    intf.print(buf);
+    uint8_t ofs = 35;
+    for(uint16_t i=x_st;i<line_end+1;i+=RLR_PTC){
+        memset(buf,0,CMD_BUF_LEN);
+        snprintf_P(buf,CMD_BUF_LEN,DRAW_LINE_FMT,i,disp.menu_y+18,i,disp.menu_y+ofs,NXT_MSG_END);
+        intf.print(buf);
+        //delay(50);
+        if(ofs == 35) ofs = 25;
+        else ofs = 35;
     }
-    */
-    //Serial.println(disp.cols);
-    /*
-    bm.set_device(&disp);
-    bm.set_items(mm_items[0],mm_items_cnt,mm_items_len);
-    bm.set_options(M_PRINT_CLEAR);
-    bm.set_rows(5);
-    bm.set_title(F("Main menu"));
+    memset(buf,0,CMD_BUF_LEN);
+    snprintf_P(buf,CMD_BUF_LEN,DRAW_LINE_FMT,x_st,disp.menu_y+35,line_end,disp.menu_y+35,NXT_MSG_END);
+    Serial.println(buf);
+    intf.print(buf);
     
-    bm.draw_menu();
-    */
-    //delay(2000);
-    //disp.clear_row(4,0);
-    /*
-    Serial.print("conv_buf : ");
-    Serial.println(disp.conv_buf);
-    Serial.print("menu_x : ");
-    Serial.println(disp.menu_x);
-    Serial.print("menu_y : ");
-    Serial.println(disp.menu_y);
-    Serial.print("row_h : ");
-    Serial.println(disp.row_h);
-    Serial.print("col_l : ");
-    Serial.println(disp.col_l);
-    Serial.print("disp_rows : ");
-    Serial.println(bm.disp_rows);
-    */
-    
-    
-    
+    //other test lines
+    disp.print(3,0,"Highlite txt line",1);
+    disp.print(4,0,"Normal text line");
+    disp.print(5,0,"Hilite digit 123456");
+    disp.print(5,15,"3",1);
+    disp.print(6,0,"01234567890123456",1);
 
 }
 
@@ -148,112 +93,6 @@ void setup(){
 
 void loop(){
     
-    switch(chk_pb()){
-        case M_PB_UP:
-            if(mm.state == EDT_STATE_MENU){ 
-                mm.move_prev();
-            }
-            else{ 
-                mm.edit_set_next();
-            }
-            break;
-        case M_PB_DN:
-            if(mm.state == EDT_STATE_MENU){
-                mm.move_next();
-            }
-            else{ 
-                mm.edit_set_prev();
-            }
-
-            break;
-        case M_PB_CH:
-            if(mm.state == EDT_STATE_MENU){
-                mm.edit_current();
-            }
-            else{
-                if(mm.set_next_digit()){ 
-                    mm.edit_current();
-                }
-                else{ 
-                    mm.draw_menu();
-                }
-            }
-            break;
-        
-    }
-    
-    /*
-    static uint8_t cur_menu = 0; //0 main , 1 sub
-    
-    switch(chk_pb()){
-        case M_PB_UP:
-            bm.move_prev();
-            break;
-        case M_PB_DN:
-            bm.move_next();
-            break;
-        case M_PB_CH:
-            //disp.restore_display();
-            if(cur_menu==0){
-                switch(bm.cur_item){
-                    case 0:
-                        bm.set_items(s1_items[0],s1_cnt,s1_len);
-                        bm.set_title(F("SubMenu 1"));
-                        bm.draw_menu();
-                        cur_menu = 1;
-                        break;
-                    case 1:
-                        bm.set_items(s2_items[0],s2_cnt,s2_len);
-                        bm.set_title(F("SubMenu 2"));
-                        bm.draw_menu();
-                        cur_menu = 1;
-                        break;
-                        
-                }
-            }
-            else{
-                if(bm.cur_item==bm.items.cnt-1){
-                    bm.set_items(mm_items[0],mm_items_cnt,mm_items_len);
-                    bm.set_title(F("Main menu"));
-                    bm.draw_menu();
-                    cur_menu = 0;
-                }
-            }
-            break;
-    }
-    */
 }
 
 
-int chk_pb(){
-    char b = 0;
-    if(Serial.available()){
-        b = Serial.read();
-        switch(b){
-            case 'u':
-                return M_PB_UP;
-                break;
-            case 'd':
-                return M_PB_DN;
-                break;
-            case 'c':
-                return M_PB_CH;
-                break;
-        }
-        while(Serial.available()) Serial.read();
-    }
-    return M_PB_NONE;
-    if(digitalRead(MNU_PB_UP) == LOW){
-        while(digitalRead(MNU_PB_UP) == LOW){}
-        return M_PB_UP;
-    }
-    if(digitalRead(MNU_PB_DN) == LOW){
-        while(digitalRead(MNU_PB_DN) == LOW){}
-        return M_PB_DN;
-    }
-    if(digitalRead(MNU_PB_CH) == LOW) {
-        while(digitalRead(MNU_PB_CH) == LOW){}
-        return M_PB_CH;
-    }
-    return M_PB_NONE;
-}

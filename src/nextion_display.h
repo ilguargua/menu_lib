@@ -24,7 +24,8 @@ typedef enum {
 
 //Nextion need a bigger buffer size 
 //so this intf define his own buffer
-#define NXT_BUF_SIZE        60
+#define NXT_BUF_SIZE        100
+#define NXT_COM_SIZE        1024
 
 #if defined(ARDUINO_ARCH_AVR)
 
@@ -35,6 +36,9 @@ typedef enum {
 #define GET_FMT             PSTR("get p[0].b[0].%c%c%c%c")
 #define TOFF_FMT            PSTR("tsw 255,0%c%c%c")
 #define TON_FMT             PSTR("tsw 255,1%c%c%c")
+#define COM_STOP            PSTR("com_stop%c%c%c")
+#define COM_START           PSTR("com_star%c%c%c")
+
 
 #else
 
@@ -45,8 +49,17 @@ typedef enum {
 #define GET_FMT             "get p[0].b[0].%c%c%c%c"
 #define TOFF_FMT            "tsw 255,0%c%c%c"
 #define TON_FMT             "tsw 255,1%c%c%c"
+#define COM_STOP            "com_stop%c%c%c"
+#define COM_START           "com_star%c%c%c"
 
 #endif
+
+typedef enum{
+    NXT_LOCK        = 1,    //lock display control while in use, restore_display() will unlock
+    NXT_PROP_FONT   = 2,    //use proportional font correction, useful for edit but slow
+    NXT_OPT_3       = 4,
+    NXT_OPT_4       = 8
+} nxt_opts_t;
 
 class nextion_display:public text_display{
 public:
@@ -59,6 +72,7 @@ public:
     uint8_t row_h;
     uint8_t col_l;
     uint8_t font;
+    uint8_t options;
     char    nxt_buf[NXT_BUF_SIZE];
     
     nextion_display();
@@ -68,10 +82,13 @@ public:
     //void get_display_data(){};
     void clear_row(uint8_t row,uint8_t col, uint8_t w=0,uint8_t rev=0);
     void print(uint8_t row,uint8_t col,const char *txt,uint8_t rev=0);
+    void print_mono(uint8_t row,uint8_t col,const char *txt,uint8_t rev=0);
+    void print_prop(uint8_t row,uint8_t col,const char *txt,uint8_t rev=0);
     void clear_area(uint8_t row,uint8_t col, uint8_t w,uint8_t h){};
     void clear_display();
     void restore_display();
     void refresh(){};
+    void set_options(uint8_t opts,uint8_t set=1);
 private:
     
     uint16_t get_nextion_data(char d);
