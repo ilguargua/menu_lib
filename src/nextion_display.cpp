@@ -58,6 +58,8 @@ void nextion_display::print(uint8_t row,uint8_t col,const char *txt,uint8_t rev)
     else print_mono(row,col,txt,rev);
 }
 
+
+//Normal printing, works well with mono-spaced fonts
 void nextion_display::print_mono(uint8_t row,uint8_t col,const char *txt,uint8_t rev){
     if(ser == nullptr) return;
     uint16_t fg = rev > 0 ? NXT_BG_COLOR : NXT_FG_COLOR;
@@ -81,6 +83,10 @@ void nextion_display::print_mono(uint8_t row,uint8_t col,const char *txt,uint8_t
     ser->print(nxt_buf);
 }
 
+
+//Proportional font printing
+//We print each char in is own box, so recrating mono-spaced
+//Ugly and slow
 void nextion_display::print_prop(uint8_t row,uint8_t col,const char *txt,uint8_t rev){
     if(ser == nullptr) return;
     uint16_t fg = rev > 0 ? NXT_BG_COLOR : NXT_FG_COLOR;
@@ -114,7 +120,6 @@ void nextion_display::print_prop(uint8_t row,uint8_t col,const char *txt,uint8_t
                             b,
                             NXT_MSG_END
         );
-        //msg_size += strlen(nxt_buf);
         if((msg_size+strlen(nxt_buf)+20) > NXT_COM_SIZE){
             ser->print("com_star");
             ser->write(0xFF);
@@ -128,9 +133,7 @@ void nextion_display::print_prop(uint8_t row,uint8_t col,const char *txt,uint8_t
             msg_size = 0;
         } 
         else msg_size += strlen(nxt_buf);
-        //Serial.println(nxt_buf);
         ser->print(nxt_buf);
-        //delay(100);
     }
     memset(nxt_buf,0,NXT_BUF_SIZE);
 #if defined(ARDUINO_ARCH_AVR)    
@@ -139,6 +142,7 @@ void nextion_display::print_prop(uint8_t row,uint8_t col,const char *txt,uint8_t
     snprintf(nxt_buf,NXT_BUF_SIZE-1,COM_START,NXT_MSG_END);
 #endif             
     ser->print(nxt_buf);
+    //wait for the display to process data and empty com buffer
     delay(10);
 }
 
@@ -212,8 +216,8 @@ uint16_t nextion_display::get_nextion_data(char d){
     uint8_t     cnt = 0;
     char        b = 0;
     memset(nxt_buf,0,NXT_BUF_SIZE);
-    //getting display data by asking page width and height
-    //empty serial buffer in case there is some previous data
+    //getting display data by asking page width and height.
+    //Empty serial buffer in case there is some previous data
     //WARNING thi may lost some data your progr is expecting
     while(ser->available()) ser->read();
 #if defined(ARDUINO_ARCH_AVR)
