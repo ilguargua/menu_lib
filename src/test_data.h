@@ -6,25 +6,95 @@
 
 #define DEF_EDIT_ITEMS  1
 
-#define MNU_PB1     A0
-#define MNU_PB2     A1
-#define MNU_PB3     A2
-#define MNU_PB4     A3
+
+//Input methods
+//uncomment only one of the following
+//#define MNU_USE_ENCODER     1
+//#define MNU_USE_PB          1
+#define MNU_USE_SERIAL      1
+
+
+//If using MNU_USE_PB how many push buttons to use
+//uncomment only one
+#define MNU_3_BTNS          3   //up down ok
+//#define MNU_4_BTNS          4   //up down ok back (right)
+//#define MNU_5_BTNS          5   //up down ok left right
+
+//inputs defs
+
+#define ENC_CH_A    2
+#define ENC_CH_B    3
+#define ENC_PB      4
+
+#define MNU_PB1     5   //up
+#define MNU_PB2     6   //down
+#define MNU_PB3     7   //ok
+#define MNU_PB4     8   //left
+#define MNU_PB5     9   //right
 
 #define MNU_PB_UP   MNU_PB1
 #define MNU_PB_DN   MNU_PB2
-#define MNU_PB_CH   MNU_PB3
-#define MNU_PB_BK   MNU_PB4
+#define MNU_PB_OK   MNU_PB3
+#define MNU_PB_LE   MNU_PB4
+#define MNU_PB_RI   MNU_PB5
 
 typedef enum{
     M_PB_NONE,
     M_PB_UP,
     M_PB_DN,
-    M_PB_CH,
-    M_PB_BK
+    M_PB_OK,
+    M_PB_LE,
+    M_PB_RI
 } m_pb_stat_t;
 
+#define MNU_INP_LEN     5
 
+#define PB_ACTIVE       LOW
+#define PB_NOT_ACTIVE   HIGH
+
+uint8_t           pb_prev_st[MNU_INP_LEN] = {PB_NOT_ACTIVE,PB_NOT_ACTIVE,PB_NOT_ACTIVE,PB_NOT_ACTIVE,PB_NOT_ACTIVE};
+const uint8_t     btns[MNU_INP_LEN] = {MNU_PB_UP,MNU_PB_DN,MNU_PB_OK,MNU_PB_RI,MNU_PB_LE};
+const char        ser_cod[MNU_INP_LEN] = {'u','d','o','l','r'};
+
+
+uint8_t ck_btns(){
+    uint8_t res = M_PB_NONE;
+    for(uint8_t i =0;i<MNU_INP_LEN;i++){
+        res = pb_check(i);
+        if(res != M_PB_NONE) return res;
+    }
+    return res;
+}
+
+uint8_t pb_check(uint8_t btn_ndx){
+    if(digitalRead(btns[btn_ndx]) == PB_ACTIVE){
+        if(pb_prev_st[btn_ndx] == PB_NOT_ACTIVE) pb_prev_st[btn_ndx] = PB_ACTIVE;
+        return M_PB_NONE;
+    }
+    else{
+        if(pb_prev_st[btn_ndx] == PB_ACTIVE){
+            pb_prev_st[btn_ndx] = PB_NOT_ACTIVE;
+            return btn_ndx+1;
+        }
+    }
+    return M_PB_NONE;
+}
+
+
+uint8_t serial_check(Stream &serial){
+    char c = -1;
+    if(serial.available()){
+        c = serial.read();
+        for(uint8_t i=0;i<MNU_INP_LEN;i++){
+            if(ser_cod[i] == c){
+                while(serial.available()) serial.read();
+                return i+1;
+            }
+        }
+    }
+    while(serial.available()) serial.read();
+    return M_PB_NONE;
+}
 
 const uint8_t mm_items_cnt = 6;
 const uint8_t mm_items_len =15;
@@ -92,6 +162,13 @@ uint8_t month = 2;
 uint16_t year = 2019;
 
 uint8_t ip_nmb[4] = {192,168,1,2};
+
+#define BR_CNT      10
+
+const PROGMEM uint32_t  ser_br[BR_CNT]={1200,2400,4800,9600,19200,38400,57600,74880,115200,230400};
+
+const PROGMEM int16_t  i_16[BR_CNT]={-1200,2400,-4800,9600,19200,-384,576,-748,1152,-2304};
+
 
 /*
 #if defined(ARDUINO_ARCH_AVR)

@@ -1,7 +1,11 @@
 /*
- * simple test to check a Nextion interface
- * 
- */
+simple test to check a Nextion interface
+this file is part of menu_lib Arduino library (https://github.com/ilguargua/menu_lib)
+
+This skecth is a just a test of a display functionality, and can be used to calculate font size.
+
+2022 - Alessandro Guarguaglini - ilguargua@gmail.com
+*/
 
 
 
@@ -12,8 +16,15 @@
 
 #define DRAW_LINE_FMT   PSTR("line %i,%i,%i,%i,65504%c%c%c")   
 #define CMD_BUF_LEN     60
+
+//Font size, in pixel
+//It must be adjusted for the font in use
+//This value works fine for ms sans serif size 16
+//For best results use mono spaced font (eg. courier new)
 #define FONT_W          12
 #define FONT_H          14
+
+
 #define RLR_PTC         (FONT_W / 2)
 
 //Serial interface for nextion connection
@@ -43,7 +54,7 @@ void setup(){
     disp.init(&intf,10,25,1,FONT_H,FONT_W);
     
     //use this if the font is a proportional font (not monospace)
-    //this is mandatory for editing, not needed in menu
+    //this is mandatory for editing, not needed in menu, and is much slower to update display
     disp.set_options(NXT_PROP_FONT);
     
     //we reset the display, useful for testing connection
@@ -77,7 +88,6 @@ void setup(){
     }
     memset(buf,0,CMD_BUF_LEN);
     snprintf_P(buf,CMD_BUF_LEN,DRAW_LINE_FMT,x_st,disp.menu_y+35,line_end,disp.menu_y+35,NXT_MSG_END);
-    Serial.println(buf);
     intf.print(buf);
     
     //other test lines

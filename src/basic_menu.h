@@ -18,7 +18,7 @@
 //#define EN_M_U8G2
 //#define EN_M_U8X8   1
 //#define EN_GFX
-//#define EN_M_LQ
+#define EN_M_LQ
 #define EN_M_SERIAL
 #define EN_M_NEXTION
 
@@ -32,7 +32,8 @@
 #include <U8x8lib.h>
 #endif
 #ifdef EN_M_LQ
-#include <LiquidCrystal.h>
+//#include <LiquidCrystal.h>
+#include <hd44780.h>
 #endif
 
 

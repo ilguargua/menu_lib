@@ -4,19 +4,20 @@
  */
 
 
-
+#include <Wire.h>
 #include <basic_menu.h>
 #include <lq_display.h>
-#include <edit_menu.h>
-
 #include <test_data.h>
+#include <hd44780ioClass/hd44780_I2Cexp.h>
 
 
-LiquidCrystal lcd(8,9,4,5,6,7);
+//LiquidCrystal lcd(8,9,4,5,6,7);
 
-//basic_menu mm;
-lq_display dev(&lcd,20,4);
-edit_menu mm(&dev);
+hd44780_I2Cexp lcd;
+
+
+lq_display disp(&lcd,20,4);
+
 
 /*
 int edt_var = 1234;
@@ -50,29 +51,41 @@ edit_date edt_date("date",year,month,day);
 
 //push_button up = push_button(MNU_PB_UP,LOW,M_PB_UP);
 
-edit_numb<int> edt_int(NMB_S_INT,i16);//,-4321,9999);
-edit_numb<float> edt_float(NMB_FLOAT,f);//,1200.0,1300.0);
-edit_date edt_date(year,month,day);
-edit_ip edt_ip(ip_nmb[0],ip_nmb[1],ip_nmb[2],ip_nmb[3]);
+//edit_numb<int> edt_int(NMB_S_INT,i16);//,-4321,9999);
+//edit_numb<float> edt_float(NMB_FLOAT,f);//,1200.0,1300.0);
+//edit_date edt_date(year,month,day);
+//edit_ip edt_ip(ip_nmb[0],ip_nmb[1],ip_nmb[2],ip_nmb[3]);
 
-edit_item   *cur_item = nullptr;
+//edit_item   *cur_item = nullptr;
 
 void setup(){
     
     Serial.begin(115200);
     Serial.println("Program begin");
-    char buf[20];
-    memset(buf,0,20);
-    pinMode(MNU_PB_UP,INPUT);
-    pinMode(MNU_PB_DN,INPUT);
-    pinMode(MNU_PB_CH,INPUT);
+    
+    
+    //char buf[20];
+    //memset(buf,0,20);
+    
+    
+    //pinMode(MNU_PB_UP,INPUT);
+    //pinMode(MNU_PB_DN,INPUT);
+    //pinMode(MNU_PB_CH,INPUT);
     //btns.add_btn(MNU_PB_UP,LOW,M_PB_UP);
     //btns.add_btn(&up);
     //btns.add_btn(MNU_PB_DN,LOW,M_PB_DN);
     //btns.add_btn(MNU_PB_CH,LOW,M_PB_CH);
     
+    //quick test of device
     lcd.begin(20,4);
     lcd.print("HELLO world!");
+    delay(2000);
+    
+    disp.clear_display();
+    disp.print(0,0,"Normal text line");
+    disp.print(1,0,"Highlite txt line",1);
+    disp.print(2,0,"Hilite digit 123456");
+    disp.print(2,15,"3",2);
     //while(1){};
     
     /*
@@ -93,7 +106,7 @@ void setup(){
     Serial.print(F("float.cur_digit : "));
     Serial.println(edt_float.cur_digit);
     */
-    
+    /*
     edt_float.set_edit_mode(EDT_MODE_DIGIT);
     //edt_int.set_edit_mode(EDT_MODE_DIGIT);
     edt_int.set_min(1000);
@@ -116,13 +129,13 @@ void setup(){
     edit_cur_item();
     Serial.print(F("*float.cur_digit : "));
     Serial.println(edt_float.cur_digit);
-    
+    */
     //while(1){};
     // mm.add_item(&edt_date);
     //mm.add_item(&edt_list);
     //mm.set_device(&dev);
     //mm.set_items(mm_items[0],mm_items_cnt,mm_items_len);
-    mm.set_options(M_PRINT_CLEAR);
+    //mm.set_options(M_PRINT_CLEAR);
     //mm.set_rows(1);
     //mm.set_rows(4);
     //mm.set_title("Main menu");
@@ -151,10 +164,12 @@ void setup(){
 
 
 void loop(){
-    edit_item_loop();
+    //edit_item_loop();
     
 }
 
+
+/*
 
 void edit_item_loop(){
     switch(chk_pb()){
@@ -303,3 +318,4 @@ int chk_pb(){
     return M_PB_NONE;
 }
 
+*/

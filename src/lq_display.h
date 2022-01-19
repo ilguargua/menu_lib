@@ -9,9 +9,11 @@
 
 class lq_display:public text_display{
 public:
-    LiquidCrystal *display;
+    //LiquidCrystal *display;
+    hd44780 *display;
     
-    lq_display(LiquidCrystal *disp,uint8_t c,uint8_t r){
+    //lq_display(LiquidCrystal *disp,uint8_t c,uint8_t r){
+    lq_display(hd44780 *disp,uint8_t c,uint8_t r){
         display = disp;
         cols = c;
         rows = r;

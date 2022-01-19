@@ -1,17 +1,14 @@
 
 
-//#include <basic_menu.h>
+#include <basic_menu.h>
 
 //#include <test_data.h>
 //#include <serial_display.h>
 #include <edit_menu.h>
 
 
-#define BR_CNT      10
 
-const PROGMEM uint32_t  ser_br[BR_CNT]={1200,2400,4800,9600,19200,38400,57600,74880,115200,230400};
 
-const PROGMEM int16_t  i_16[BR_CNT]={-1200,2400,-4800,9600,19200,-384,576,-748,1152,-2304};
 
 //text_display  dumb;
 
