@@ -43,19 +43,18 @@ typedef enum{
     M_PB_UP,
     M_PB_DN,
     M_PB_OK,
-    M_PB_LE,
-    M_PB_RI
-} m_pb_stat_t;
+    M_PB_RI,
+    M_PB_LE
+} m_input_vals_t;
 
 #define MNU_INP_LEN     5
 
 #define PB_ACTIVE       LOW
 #define PB_NOT_ACTIVE   HIGH
 
+#ifdef MNU_USE_PB
 uint8_t           pb_prev_st[MNU_INP_LEN] = {PB_NOT_ACTIVE,PB_NOT_ACTIVE,PB_NOT_ACTIVE,PB_NOT_ACTIVE,PB_NOT_ACTIVE};
 const uint8_t     btns[MNU_INP_LEN] = {MNU_PB_UP,MNU_PB_DN,MNU_PB_OK,MNU_PB_RI,MNU_PB_LE};
-const char        ser_cod[MNU_INP_LEN] = {'u','d','o','l','r'};
-
 
 uint8_t ck_btns(){
     uint8_t res = M_PB_NONE;
@@ -79,22 +78,145 @@ uint8_t pb_check(uint8_t btn_ndx){
     }
     return M_PB_NONE;
 }
+#endif
 
+#ifdef MNU_USE_SERIAL
+const char ser_cod[MNU_INP_LEN] = {'u','d','o','l','r'};
 
-uint8_t serial_check(Stream &serial){
-    char c = -1;
-    if(serial.available()){
-        c = serial.read();
+uint8_t serial_check(){//Stream &serial){
+    char c = 0;
+    if(Serial.available()){
+        c = Serial.read();
         for(uint8_t i=0;i<MNU_INP_LEN;i++){
             if(ser_cod[i] == c){
-                while(serial.available()) serial.read();
+                while(Serial.available()) Serial.read();
                 return i+1;
             }
         }
     }
-    while(serial.available()) serial.read();
+    while(Serial.available()) Serial.read();
     return M_PB_NONE;
 }
+#endif
+
+#ifdef MNU_USE_ENCODER
+struct enc_data{
+    volatile uint8_t pa=0;
+    volatile uint8_t pb=0;
+    volatile int8_t  value=0;
+    uint8_t          ppb=PB_NOT_ACTIVE;
+} enc;
+
+void enc_a_isr(){
+    if(digitalRead(ENC_CH_B) == ACTIVE and enc.pb) {
+        enc.value += 1;
+        enc.pb = 0;
+        enc.pa = 0;
+        return;
+    }
+    if(digitalRead(ENC_CH_A) == ACTIVE and enc.pa == 0) enc.pa = 1;  //reset pb??
+}
+
+void enc_b_isr(){
+    if(digitalRead(ENC_CH_A) == ACTIVE and enc.pa) {
+        enc.value -= 1;
+        enc.pa = 0;
+        enc.pb = 0;
+        return;
+    }
+    if(digitalRead(ENC_CH_B) == ACTIVE and enc.pb == 0) enc.pb = 1;
+}
+
+void enc_timed_isr(){
+    uint8_t a = digitalRead(ENC_CH_A) == ACTIVE ? 1 : 0;
+    uint8_t b = digitalRead(ENC_CH_B) == ACTIVE ? 1 : 0;
+    uint8_t r = 0;
+    r = (enc.pb*8)+(enc.pa*4)+(b*2)+a;
+    switch(r){
+        case 1:             // A    B   PA  PB
+                            // 1    0   0   0   = 1
+            
+            enc.pa = 1;     // 1    0   1   0   = 5
+            break;
+        case 2:             // A    B   PA  PB
+                            // 0    1   0   0   = 2
+
+            enc.pb = 1;     // 0    1   0   1   = 10            
+            break;
+        case 7:             // A    B   PA  PB
+                            // 1    1   1   0
+            enc.pb = 0;
+            enc.pa = 0;
+            enc.value += 1;
+            break;
+        case 11:        // A    B   PA  PB
+                        // 1    1   0   1
+            enc.value -= 1;
+            enc.pa = 0;
+            enc.pb = 0;
+            break;
+        
+        case 4:
+            enc.pa = 0;
+            break;
+        case 8:
+            enc.pb = 0;
+            break;
+    }
+}
+
+uint8_t encoder_check(){
+    uint8_t ret = M_PB_NONE;
+    if(digitalRead(ENC_PB) == PB_ACTIVE){
+        if(enc.ppb == PB_NOT_ACTIVE) enc.ppb = PB_ACTIVE;
+        ret = M_PB_NONE;
+    }
+    else{
+        if(enc.ppb == PB_ACTIVE){
+            enc.ppb = PB_NOT_ACTIVE;
+            ret = M_PB_OK;
+        }
+    }
+    if(enc.value !=0){
+        if(enc.value > 0) ret = M_PB_UP;
+        else ret = M_PB_DN;
+        enc.value = 0;
+    }
+    return ret;
+}
+#endif
+
+uint8_t input_check(){
+#ifdef MNU_USE_PB
+    return ck_btns();
+#endif
+#ifdef MNU_USE_ENCODER
+    return encoder_check();
+#endif
+#ifdef MNU_USE_SERIAL
+    return serial_check()
+#endif
+    return M_PB_NONE;
+}
+
+int8_t menu_loop(basic_menu *mnu){
+    int8_t ret = -1;
+    switch(input_check()){
+        case M_PB_UP:
+        case M_PB_LE:
+            mnu->move_prev();
+            break;
+        case M_PB_DN:
+        case M_PB_RI:
+            mnu->move_next();
+            break;
+        case M_PB_OK:
+            ret = mnu->cur_item;
+            break;
+    }
+    return ret;
+}
+
 
 const uint8_t mm_items_cnt = 6;
 const uint8_t mm_items_len =15;
