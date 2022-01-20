@@ -133,6 +133,7 @@ public:
     const char  *get_txt_value();
 };
 
+/*
 template <typename T>
 edit_numb<T>::edit_numb(uint8_t t):edit_item(EDT_NUMB){
     n_type = t;
@@ -145,7 +146,8 @@ edit_numb<T>::edit_numb(uint8_t t,T &val):edit_item(EDT_NUMB){
     n_type = t;
     init(val);
 }
-
+*/
+/*
 template <typename T>
 void edit_numb<T>::init(T &val,const T min,const T max,const T stp){
     value = val;
@@ -180,6 +182,7 @@ void edit_numb<T>::set_max(const T max){
     set_options(NMB_CHK_HIGH);
 }
 
+*/
 
 /*
 template <typename T>
@@ -240,7 +243,7 @@ edit_numb<T>::edit_numb(uint8_t t,const char *text,T &val,const T min,const T ma
 }
 */
 
-
+/*
 template <typename T>
 const char *edit_numb<T>::get_txt_value(){
     memset(conv_buf,0,MENU_BUF_LEN);
@@ -334,7 +337,7 @@ uint8_t edit_numb<T>::set_prev_digit(){
     set_prev_step();    
     return 1;
 }
-
+*/
 
 #if defined(ARDUINO_ARCH_AVR) 
 const PROGMEM char      ip_txt_fmt[] = "%3u:%3u:%3u:%3u";
@@ -628,6 +631,7 @@ public:
     uint8_t         set_next_digit();
     uint8_t         set_prev_digit();
     const char      *get_row(uint8_t row);
+    edit_item       *get_cur_item(){return edt_items[cur_item];};
 
     
 };

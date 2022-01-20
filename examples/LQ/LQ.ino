@@ -8,7 +8,9 @@
 #include <basic_menu.h>
 #include <lq_display.h>
 #include <test_data.h>
+#include <basic_inputs.h>
 #include <hd44780ioClass/hd44780_I2Cexp.h>
+#include <edit_menu.h>
 
 
 //LiquidCrystal lcd(8,9,4,5,6,7);
@@ -58,6 +60,13 @@ edit_date edt_date("date",year,month,day);
 
 //edit_item   *cur_item = nullptr;
 
+int a = 1234;
+
+
+edit_numb<int> edt_int(NMB_S_INT,a);
+edit_numb<float> edt_float(NMB_FLOAT,f);
+edit_numb<uint8_t> edt_day(NMB_S_INT,day);
+
 void setup(){
     
     Serial.begin(115200);
@@ -87,7 +96,9 @@ void setup(){
     disp.print(2,0,"Hilite digit 123456");
     disp.print(2,15,"3",2);
     //while(1){};
-    
+    edt_int.set_min(12);
+    edt_float.set_min(2.5);
+    edt_day.set_options(NMB_CHK_LOW);
     /*
     Serial.print(F("float.nmb_len : "));
     Serial.println(edt_float.nmb_len);

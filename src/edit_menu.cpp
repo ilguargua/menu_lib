@@ -62,6 +62,165 @@ void edit_item::edit(text_display *device, uint8_t row, uint8_t col,uint8_t max_
 */
 
 
+
+template <typename T>
+edit_numb<T>::edit_numb(uint8_t t):edit_item(EDT_NUMB){
+    n_type = t;
+    //init(0);
+    value = 0;
+    //step = 1;
+    options = 0;
+    reset_step();
+}
+
+
+template <typename T>
+edit_numb<T>::edit_numb(uint8_t t,T &val):edit_item(EDT_NUMB){
+    n_type = t;
+    init(val);
+}
+
+
+template <typename T>
+void edit_numb<T>::init(T &val,const T min,const T max,const T stp){
+    value = val;
+    options = 0;
+    if(min == 0 and max == 0){
+        min_val = 0;
+        max_val = 0;
+        set_options(NMB_CHK_LOW,0);
+        set_options(NMB_CHK_HIGH,0);
+    }
+    else{
+        min_val = min;
+        set_options(NMB_CHK_LOW);
+        if(max > min){
+            max_val = max;
+            set_options(NMB_CHK_HIGH);
+        }
+    }
+    step = stp; //TODO FIX this
+    reset_step();
+}
+
+
+template <typename T>
+void edit_numb<T>::set_min(const T min){
+    min_val = min;
+    set_options(NMB_CHK_LOW);
+}
+
+template <typename T>
+void edit_numb<T>::set_max(const T max){
+    max_val = max;
+    set_options(NMB_CHK_HIGH);
+}
+
+
+template <typename T>
+const char *edit_numb<T>::get_txt_value(){
+    memset(conv_buf,0,MENU_BUF_LEN);
+#if defined(ARDUINO_ARCH_AVR)
+    if(n_type == NMB_FLOAT){
+        dtostrf(value,0-(MENU_BUF_LEN-1),2,conv_buf);
+        for(uint8_t i=0;i<MENU_BUF_LEN;i++){
+            if(conv_buf[i] == ' '){
+                conv_buf[i] = 0;
+                break;
+            }
+        }
+    }
+    else snprintf(conv_buf,MENU_BUF_LEN,nmb_fmt[n_type],value);
+#else        
+    snprintf(conv_buf,MENU_BUF_LEN,nmb_fmt[n_type],value);
+#endif
+    nmb_len = strlen(conv_buf);
+    return conv_buf;
+}
+
+template <typename T>
+uint8_t edit_numb<T>::set_next_value(){
+    uint8_t ret = 0;
+    uint8_t l_bfr = strlen(get_txt_value());
+    if((options & NMB_CHK_HIGH) == 0){
+        value += step;
+        ret = 0;
+    }
+    else{
+        value = constrain(value+step,min_val,max_val); //this is safe (min_val 0 as default)
+        if(value == max_val) ret = 1;
+    }
+    if(edt_mode == EDT_MODE_DIGIT and l_bfr != strlen(get_txt_value())) reset_step();
+    return ret;
+}
+
+template <typename T>
+uint8_t edit_numb<T>::set_prev_value(){
+    uint8_t ret = 0;
+    uint8_t l_bfr = strlen(get_txt_value());
+    if((options & NMB_CHK_LOW) == 0){
+        value -= step;
+        ret = 0;
+    }
+    else{
+        if(max_val > min_val) value = constrain(value-step,min_val,max_val); //this must be checked (if max_val is not set)
+        else{
+            if(value - step < min_val) value = min_val;
+            else value -= step;
+        }
+        if(value == min_val)ret = 2;
+     }
+    if(edt_mode == EDT_MODE_DIGIT and l_bfr != strlen(get_txt_value())) reset_step();
+    return ret;
+}
+
+template <typename T>
+void edit_numb<T>::reset_step(){
+    if(n_type == NMB_FLOAT) step = .01;
+    else step = 1;
+    get_txt_value();
+    cur_digit = nmb_len -1;
+}
+
+
+
+template <typename T>
+uint8_t edit_numb<T>::set_next_digit(){
+    get_txt_value();
+    if(cur_digit > 0) cur_digit--;
+    else return 0;
+    if(conv_buf[cur_digit] == '-') return 0;
+    if(conv_buf[cur_digit] == '.'){
+        if(cur_digit > 0) cur_digit--;
+        else return 0;
+    } 
+    set_next_step();    
+    return 1;
+}
+
+template <typename T>
+uint8_t edit_numb<T>::set_prev_digit(){
+    get_txt_value();
+    if(cur_digit < nmb_len-1) cur_digit++;
+    else return 0;
+    if(conv_buf[cur_digit] == '.'){
+        if(cur_digit < nmb_len-1) cur_digit++;
+        else return 0;
+    } 
+    set_prev_step();    
+    return 1;
+}
+
+template class edit_numb<char>;
+template class edit_numb<unsigned char>;
+template class edit_numb<short int>;
+template class edit_numb<unsigned short int>;
+template class edit_numb<int>;
+template class edit_numb<unsigned int>;
+template class edit_numb<long>;
+template class edit_numb<unsigned long>;
+template class edit_numb<float>;
+
 /*******************************************************************************/
 
 edit_ip::edit_ip(uint8_t &ip1,uint8_t &ip2,uint8_t &ip3,uint8_t &ip4):edit_item(EDT_IP){
