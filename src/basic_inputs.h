@@ -106,7 +106,7 @@ struct enc_data{
 
 void enc_a_isr(){
     if(digitalRead(ENC_CH_B) == PB_ACTIVE and enc.pb) {
-        enc.value += 1;
+        enc.value -= 1;
         enc.pb = 0;
         enc.pa = 0;
         return;
@@ -116,7 +116,7 @@ void enc_a_isr(){
 
 void enc_b_isr(){
     if(digitalRead(ENC_CH_A) == PB_ACTIVE and enc.pa) {
-        enc.value -= 1;
+        enc.value += 1;
         enc.pa = 0;
         enc.pb = 0;
         return;
@@ -202,10 +202,12 @@ int8_t menu_loop(basic_menu *mnu){
         case M_PB_UP:
         case M_PB_LE:
             mnu->move_prev();
+            mnu->draw_menu();
             break;
         case M_PB_DN:
         case M_PB_RI:
             mnu->move_next();
+            mnu->draw_menu();
             break;
         case M_PB_OK:
             ret = mnu->cur_item;
@@ -276,24 +278,28 @@ int8_t edit_menu_loop(edit_menu *mm){
         case M_PB_UP:
             if(mm->state == EDT_STATE_MENU){ 
                 mm->move_prev();
+                mm->draw_menu();
             }
             else{ 
                 mm->edit_set_next();
+                mm->edit_current();
             }
             break;
         case M_PB_DN:
             if(mm->state == EDT_STATE_MENU){
                 mm->move_next();
+                mm->draw_menu();
             }
             else{ 
                 mm->edit_set_prev();
+                mm->edit_current();
             }
             break;
         case M_PB_OK:
             //Serial.println("M_PB_CH pressed");
             if(mm->state == EDT_STATE_MENU){
                 if(mm->get_cur_item()->edt_mode == EDT_MODE_NONE) ret = mm->cur_item;
-                else ret = -2;//mm.edit_current();
+                else mm->edit_current();
             }
             else{
 #if defined(MNU_3_BTNS) || defined(MNU_4_BTNS)  // OK btn in 3/4 btns mode shift digit (if EDT_MODE_DIGIT) to left or exit(if no more digit)                
@@ -302,10 +308,13 @@ int8_t edit_menu_loop(edit_menu *mm){
                 }
                 else{ 
                     ret = mm->cur_item;
+                    mm->state = EDT_STATE_MENU;
                     mm->draw_menu();
                 }
 #else
-                ret = mm->cur_item;
+                //ret = mm->cur_item;
+                mm->state = EDT_STATE_MENU;
+                mm->draw_menu();
 #endif
             }
             break;
@@ -316,6 +325,7 @@ int8_t edit_menu_loop(edit_menu *mm){
                     mm->edit_current();
                 }
                 else{
+                    mm->state = EDT_STATE_MENU;
                     mm->draw_menu();
                 }
             }
@@ -325,4 +335,4 @@ int8_t edit_menu_loop(edit_menu *mm){
     
 }
 
-#endif
+#endif // ifndef __BASIC_INPUTS_H__
