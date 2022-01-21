@@ -202,12 +202,12 @@ int8_t menu_loop(basic_menu *mnu){
         case M_PB_UP:
         case M_PB_LE:
             mnu->move_prev();
-            mnu->draw_menu();
+            //mnu->draw_menu();
             break;
         case M_PB_DN:
         case M_PB_RI:
             mnu->move_next();
-            mnu->draw_menu();
+            //mnu->draw_menu();
             break;
         case M_PB_OK:
             ret = mnu->cur_item;
@@ -278,21 +278,21 @@ int8_t edit_menu_loop(edit_menu *mm){
         case M_PB_UP:
             if(mm->state == EDT_STATE_MENU){ 
                 mm->move_prev();
-                mm->draw_menu();
+                //mm->draw_menu();
             }
             else{ 
                 mm->edit_set_next();
-                mm->edit_current();
+                //mm->edit_current();
             }
             break;
         case M_PB_DN:
             if(mm->state == EDT_STATE_MENU){
                 mm->move_next();
-                mm->draw_menu();
+                //mm->draw_menu();
             }
             else{ 
                 mm->edit_set_prev();
-                mm->edit_current();
+                //mm->edit_current();
             }
             break;
         case M_PB_OK:
@@ -325,7 +325,19 @@ int8_t edit_menu_loop(edit_menu *mm){
                     mm->edit_current();
                 }
                 else{
-                    mm->state = EDT_STATE_MENU;
+                    //mm->state = EDT_STATE_MENU;
+                    mm->draw_menu();
+                }
+            }
+            break;
+        case M_PB_LE:
+            //Serial.println(F("M_PB_BK pressed"));
+            if(mm->state == EDT_STATE_EDIT){
+                if(mm->get_cur_item()->edt_mode == EDT_MODE_DIGIT and  mm->set_next_digit()){ 
+                    mm->edit_current();
+                }
+                else{
+                    //mm->state = EDT_STATE_MENU;
                     mm->draw_menu();
                 }
             }

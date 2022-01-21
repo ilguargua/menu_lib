@@ -192,7 +192,11 @@ void basic_menu::set_title(const char *tit){
 
 void basic_menu::set_options(uint8_t opts, uint8_t set){
     if(set > 0) options |= opts;
-    else options ^= opts;
+    else options // ^= opts;
+    {
+        if(options & opts) options -= opts;
+    }
+        
 }
 
 void basic_menu::draw_menu(){
