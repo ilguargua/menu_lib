@@ -1,65 +1,61 @@
 
 
 #include <basic_menu.h>
+#include <test_data.h>
+//#include <serial_display.h>
+//#include <edit_menu.h>
+#include <u8x8_display.h>
+#include <basic_inputs.h>
 
 //#include <test_data.h>
-//#include <serial_display.h>
-#include <edit_menu.h>
 
 
 
 
+U8X8_SSD1306_128X64_NONAME_HW_I2C  u8x8_dev;
 
-//text_display  dumb;
 
-//serial_display dsp(&Serial);
+u8x8_display  disp;
 
-//basic_menu mm;
 
-edit_numb_list<uint32_t>  edt("n",ser_br,10);
-edit_numb_list<int16_t>  edt_16("t",i_16,10);
+
+
+basic_menu my_menu;
+
 
 void setup(){
     Serial.begin(115200);
-    for(uint8_t i=0;i<BR_CNT;i++){
-        Serial.println((int16_t) pgm_read_word(i_16+i));
-        Serial.println(pgm_read_word(edt_16.base+i));
-    }
+    Serial.println(F("program begin..."));
+
+    u8x8_dev.setI2CAddress(0x78);
+    u8x8_dev.begin();
+    u8x8_dev.setFont(u8x8_font_chroma48medium8_r);
+    disp.set_device(&u8x8_dev);
+    Serial.print("disp.rows = ");
+    Serial.println(disp.rows);
+    Serial.print("disp.cols = ");
+    Serial.println(disp.cols);
+
+#ifdef MNU_USE_ENCODER
+    enc_setup();
+#endif    
+
+#ifdef MNU_USE_PB
+    pb_setup();
+#endif    
     
-    //edt.set_next_value();
-    /*
-    Serial.println();
-    Serial.println(edt_16.size);
-    Serial.println(edt_16.cur_item);
-    edt_16.set_next_value();
-    Serial.println(edt_16.cur_item);
-    Serial.println(edt_16.get_txt_value());
-    */
+    my_menu.set_device(&disp);
+    my_menu.set_items(mm_items[0],mm_items_cnt,mm_items_len);
+    my_menu.set_title(F("My menu"));
+    my_menu.set_rows(4);
+    my_menu.draw_menu();
     
-    /*
-    mm.set_items(mm_items[0],mm_items_cnt,mm_items_len);
-    mm.set_device(&dsp);
-    mm.set_title(F("main menu"));
-    mm.draw_menu();
-    mm.move_next();
-    //const char *t = mm.get_row(0);
-    mm.draw_menu();
-    mm.set_items(s1_items[0],s1_cnt,s1_len);
-    mm.set_title(F("sub menu 1"));
-    mm.draw_menu();
-    mm.move_prev();
-    mm.draw_menu();
-    mm.set_items(s2_items[0],s2_cnt,s2_len);
-    mm.draw_menu();
-    mm.move_next();
-    mm.draw_menu();
-    */
 
 }
 
 
 void loop(){
-
+    menu_loop(&my_menu);
     
 }
 

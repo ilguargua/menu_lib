@@ -4,7 +4,7 @@
 #define __TEST_DATA_H__
 
 
-#define DEF_EDIT_ITEMS  1
+//#define DEF_EDIT_ITEMS  1
 
 
 

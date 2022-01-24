@@ -119,6 +119,7 @@ void basic_menu::set_items(const char *base,uint8_t cnt,uint8_t item_l){
 }
 
 void basic_menu::move_next(){
+    uint8_t pci = cur_item;
     cur_item ++;
     if(cur_item > items.cnt-1){
         if(options & M_NO_ROLLOVER){
@@ -128,7 +129,8 @@ void basic_menu::move_next(){
         else cur_item = 0;
     } 
     if(cur_item >= start_item and cur_item < start_item+disp_rows) {
-        draw_menu();
+        //draw_menu();
+        redraw_menu(0,pci);
         return;
     }
     if(cur_item+1 > disp_rows){
@@ -140,17 +142,20 @@ void basic_menu::move_next(){
 }
 
 void basic_menu::move_prev(){
+    uint8_t pci = cur_item;
     if(cur_item > 0) cur_item --;
     else {
         if(options & M_NO_ROLLOVER) return;
         else cur_item = items.cnt-1;
     }
     if(items.cnt <= disp_rows){
-        draw_menu();
+        //draw_menu();
+        redraw_menu(1,pci);
         return;
     }
     if(cur_item >= start_item and  cur_item - start_item < disp_rows-1) {
-        draw_menu();
+        //draw_menu();
+        redraw_menu(1,pci);
         return;
     }    
     if(cur_item+1 > disp_rows){
@@ -192,7 +197,7 @@ void basic_menu::set_title(const char *tit){
 
 void basic_menu::set_options(uint8_t opts, uint8_t set){
     if(set > 0) options |= opts;
-    else options // ^= opts;
+    else 
     {
         if(options & opts) options -= opts;
     }
@@ -225,3 +230,52 @@ void basic_menu::draw_menu(){
     device->refresh();
 }
 
+
+void basic_menu::redraw_menu(uint8_t dir,uint8_t pci){
+    uint8_t rev = 0;
+    uint8_t pr = 0;
+    uint8_t start = 0;
+    uint8_t cr = get_cur_row();
+    
+    if(device == nullptr) return;
+    //if(options & M_DRAW_CLEAR)device->clear_display();
+    if(title != nullptr){
+        start = 1;
+    }
+    
+    if(dir == 0){
+        if(cur_item == 0) pr = disp_rows - start - 1;
+        else pr = cr -1;
+    }
+    else{
+        //Serial.print("pci = ");
+        //Serial.println(pci);
+        //Serial.print("cur_item = ");
+        //Serial.println(cur_item);
+        
+        if(cur_item+1 != pci) pr = 0;
+        else pr = cr+1;//+start;
+        //Serial.print("pr = ");
+        //Serial.println(pr);
+        
+    }
+    
+    /*
+    if(dir == 0){   //next
+        //if(options | M_PRINT_CLEAR) device->clear_row(cr+start,0);
+        //device->print(cr+start,0,get_row(cr),1);
+    }
+    else{   //prev
+        if(options | M_PRINT_CLEAR) device->clear_row(cr+1+start,0);
+        device->print(cr+1+start,0,get_row(cr+1));
+    }
+    */
+    if(options | M_PRINT_CLEAR) device->clear_row(pr+start,0);
+    //delay(1000);
+    device->print(pr+start,0,get_row(pr));
+    //delay(1000);
+
+    if(options | M_PRINT_CLEAR) device->clear_row(cr+start,0);
+    device->print(cr+start,0,get_row(cr),1);
+    device->refresh();
+}

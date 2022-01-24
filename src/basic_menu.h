@@ -16,11 +16,11 @@
 
 //#define EN_M_CURSES
 //#define EN_M_U8G2
-//#define EN_M_U8X8   1
+#define EN_M_U8X8   1
 //#define EN_GFX
-#define EN_M_LQ
-#define EN_M_SERIAL
-#define EN_M_NEXTION
+//#define EN_M_LQ
+//#define EN_M_SERIAL
+//#define EN_M_NEXTION
 
 #ifdef EN_M_CURSES
 #include <curses.h>
@@ -164,6 +164,7 @@ public:
     
     void            set_options(uint8_t opts, uint8_t set=1); //0 to unset
     void            draw_menu();
+    void            redraw_menu(uint8_t dir,uint8_t pci);
     void            set_rows(uint8_t r){disp_rows=r;};
     //text_display    *new_device(uint8_t dev_type,void *dev);
     //~basic_menu(){if(options & M_NEW_DEV) delete device;};

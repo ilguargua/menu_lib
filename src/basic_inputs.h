@@ -6,9 +6,9 @@
 
 //Input methods
 //uncomment only one of the following
-//#define MNU_USE_ENCODER     1
+#define MNU_USE_ENCODER     1
 //#define MNU_USE_PB          1
-#define MNU_USE_SERIAL      1
+//#define MNU_USE_SERIAL      1
 
 
 //If using MNU_USE_PB how many push buttons to use
@@ -17,8 +17,8 @@
 //#define MNU_4_BTNS          4   //up down ok back (right)
 //#define MNU_5_BTNS          5   //up down ok left right
 
-//inputs defs
 
+//inputs pins defs
 #define ENC_CH_A    2
 #define ENC_CH_B    3
 #define ENC_PB      4
@@ -35,6 +35,8 @@
 #define MNU_PB_LE   MNU_PB4
 #define MNU_PB_RI   MNU_PB5
 
+
+//returned values
 typedef enum{
     M_PB_NONE,
     M_PB_UP,
@@ -48,10 +50,20 @@ typedef enum{
 
 #define PB_ACTIVE       LOW
 #define PB_NOT_ACTIVE   HIGH
+#define SER_INP_DEV     Serial
 
 #ifdef MNU_USE_PB
 uint8_t           pb_prev_st[MNU_INP_LEN] = {PB_NOT_ACTIVE,PB_NOT_ACTIVE,PB_NOT_ACTIVE,PB_NOT_ACTIVE,PB_NOT_ACTIVE};
 const uint8_t     btns[MNU_INP_LEN] = {MNU_PB_UP,MNU_PB_DN,MNU_PB_OK,MNU_PB_RI,MNU_PB_LE};
+
+void pb_setup(){
+    uint8_t mode = PB_ACTIVE == LOW ? INPUT_PULLUP : INPUT;
+    pinMode(MNU_PB1,mode);
+    pinMode(MNU_PB2,mode);
+    pinMode(MNU_PB3,mode);
+    pinMode(MNU_PB4,mode);
+    pinMode(MNU_PB5,mode);
+}
 
 uint8_t pb_check(uint8_t btn_ndx){
     if(digitalRead(btns[btn_ndx]) == PB_ACTIVE){
@@ -82,16 +94,16 @@ const char ser_cod[MNU_INP_LEN] = {'u','d','o','l','r'};
 
 uint8_t serial_check(){//Stream &serial){
     char c = 0;
-    if(Serial.available()){
-        c = Serial.read();
+    if(SER_INP_DEV.available()){
+        c = SER_INP_DEV.read();
         for(uint8_t i=0;i<MNU_INP_LEN;i++){
             if(ser_cod[i] == c){
-                while(Serial.available()) Serial.read();
+                while(SER_INP_DEV.available()) SER_INP_DEV.read();
                 return i+1;
             }
         }
     }
-    while(Serial.available()) Serial.read();
+    //while(Serial.available()) Serial.read();
     return M_PB_NONE;
 }
 #endif
@@ -111,7 +123,10 @@ void enc_a_isr(){
         enc.pa = 0;
         return;
     }
-    if(digitalRead(ENC_CH_A) == PB_ACTIVE and enc.pa == 0) enc.pa = 1;  //reset pb??
+    if(digitalRead(ENC_CH_A) == PB_ACTIVE and enc.pa == 0){ 
+        enc.pa = 1;
+        enc.pb = 0;
+    }  //reset pb??
 }
 
 void enc_b_isr(){
@@ -121,7 +136,10 @@ void enc_b_isr(){
         enc.pb = 0;
         return;
     }
-    if(digitalRead(ENC_CH_B) == PB_ACTIVE and enc.pb == 0) enc.pb = 1;
+    if(digitalRead(ENC_CH_B) == PB_ACTIVE and enc.pb == 0){ 
+        enc.pb = 1;
+        enc.pa = 0;
+    }
 }
 
 void enc_timed_isr(){
@@ -180,6 +198,14 @@ uint8_t encoder_check(){
         enc.value = 0;
     }
     return ret;
+}
+
+void enc_setup(){
+    uint8_t mode = PB_ACTIVE == LOW ? INPUT_PULLUP : INPUT;
+    pinMode(ENC_CH_A,mode);
+    pinMode(ENC_CH_B,mode);
+    attachInterrupt(digitalPinToInterrupt(ENC_CH_A), enc_a_isr, FALLING);
+    attachInterrupt(digitalPinToInterrupt(ENC_CH_B), enc_b_isr, FALLING);
 }
 #endif
 
@@ -273,7 +299,7 @@ uint8_t edit_item_loop(edit_item *cur_item){
 }
 
 int8_t edit_menu_loop(edit_menu *mm){
-    int8_t ret = -1     //-1 - editing, no change -2 - editing, need disp update  0 or pos. nmb - exit with item nmb
+    int8_t ret = -1;     //-1 - editing, no change -2 - editing, need disp update  0 or pos. nmb - exit with item nmb
     switch(input_check()){
         case M_PB_UP:
             if(mm->state == EDT_STATE_MENU){ 
