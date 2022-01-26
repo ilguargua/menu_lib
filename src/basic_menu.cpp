@@ -110,6 +110,15 @@ text_display *basic_menu::new_device(uint8_t dev_type,void *dev){
 }
 */
 
+void basic_menu::set_rows(uint8_t r){
+    uint8_t rows = constrain(r,1,device->rows);
+    if(rows > 1){
+        if(title != nullptr) rows--;
+    }
+    else title = nullptr;
+    disp_rows=rows;
+};
+
 void basic_menu::set_items(const char *base,uint8_t cnt,uint8_t item_l){
     items.base = base;
     items.cnt = cnt;
@@ -183,10 +192,13 @@ uint8_t basic_menu::get_cur_row(){
 }
 
 #if defined(ARDUINO_ARCH_AVR)
-void basic_menu::set_title(const __FlashStringHelper *tit){
+void basic_menu::set_title(const __FlashStringHelper *tit)
 #else
-void basic_menu::set_title(const char *tit){
+void basic_menu::set_title(const char *tit)
 #endif
+{    
+    if(title == nullptr and disp_rows < 2) return;  //No title if less than 2 rows
+    if(title == nullptr and tit == nullptr) return;  //Nothihg to do
     uint8_t i = 1;
     if(title != nullptr) i = 0;
     title = tit;
@@ -211,6 +223,9 @@ void basic_menu::draw_menu(){
     
     if(device == nullptr) return;
     if(options & M_DRAW_CLEAR)device->clear_display();
+    if(cur_item > start_item and 
+       cur_item > disp_rows -1 and 
+       cur_item - start_item > disp_rows-1) start_item = cur_item - disp_rows + 1;
     if(title != nullptr){
 #if defined(ARDUINO_ARCH_AVR)
         memset(avr_buf,0,MENU_BUF_LEN);
@@ -222,6 +237,7 @@ void basic_menu::draw_menu(){
         start = 1;
     }
     for(uint8_t i = start;i<r_cnt+start;i++){
+    //for(uint8_t i = start;i<r_cnt;i++){
         if(i == get_cur_row()+start) rev = 1;
         else rev = 0;
         if(options | M_PRINT_CLEAR) device->clear_row(i,0);//,strlen(itm));//items.len);

@@ -16,12 +16,12 @@ const PROGMEM char mm_items[][mm_items_len+1] = {
 #else
 const char mm_items[][mm_items_len+1]={// 1234567890123456
 #endif    
-                                         "Item 1",
-                                         "Item two",
-                                         "Third item",
-                                         "Item 4",
-                                         "Item five",
-                                         "Sixth item"};
+                                         "Show/hide title",
+                                         "Set rows (2)",
+                                         "Set rows (3)",
+                                         "Set rows (4)",
+                                         "Sub menu 1",
+                                         "Sub menu 2"};
 
 
                                          
@@ -34,7 +34,7 @@ const PROGMEM char s1_items[][s1_len+1]={// 1234567890123456
 #else
 const char s1_items[][s1_len+1]={//  1234567890123456
 #endif
-                                    "sub1-Item 1",
+                                    "Show/hide title",
                                     "sub1-Item two",
                                     "sub1-Third item",
                                     "sub1-Item 4",
@@ -49,7 +49,7 @@ const PROGMEM char s2_items[][s2_len+1]={// 1234567890123456
 #else
 const char s2_items[][s2_len+1]={//  1234567890123456
 #endif
-                                    "sub2-Item 1",
+                                    "Show/hide title",
                                     "sub2-Item two",
                                     "sub2-Third item",
                                     "sub2-Item 4",

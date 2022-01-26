@@ -157,15 +157,15 @@ public:
     void            move_next();
     void            move_prev();
 #if defined(ARDUINO_ARCH_AVR)    
-    void            set_title(const __FlashStringHelper *tit);
+    void            set_title(const __FlashStringHelper *tit = nullptr);
 #else
-    void            set_title(const char *tit);
+    void            set_title(const char *tit = nullptr);
 #endif    
     
     void            set_options(uint8_t opts, uint8_t set=1); //0 to unset
     void            draw_menu();
     void            redraw_menu(uint8_t dir,uint8_t pci);
-    void            set_rows(uint8_t r){disp_rows=r;};
+    void            set_rows(uint8_t r);
     //text_display    *new_device(uint8_t dev_type,void *dev);
     //~basic_menu(){if(options & M_NEW_DEV) delete device;};
 };
