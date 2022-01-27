@@ -223,9 +223,12 @@ void basic_menu::draw_menu(){
     
     if(device == nullptr) return;
     if(options & M_DRAW_CLEAR)device->clear_display();
+    
+    //check if cur_item is visible
     if(cur_item > start_item and 
        cur_item > disp_rows -1 and 
        cur_item - start_item > disp_rows-1) start_item = cur_item - disp_rows + 1;
+    
     if(title != nullptr){
 #if defined(ARDUINO_ARCH_AVR)
         memset(avr_buf,0,MENU_BUF_LEN);
@@ -237,7 +240,6 @@ void basic_menu::draw_menu(){
         start = 1;
     }
     for(uint8_t i = start;i<r_cnt+start;i++){
-    //for(uint8_t i = start;i<r_cnt;i++){
         if(i == get_cur_row()+start) rev = 1;
         else rev = 0;
         if(options | M_PRINT_CLEAR) device->clear_row(i,0);//,strlen(itm));//items.len);
@@ -247,6 +249,7 @@ void basic_menu::draw_menu(){
 }
 
 
+//redraw only current and previous lines
 void basic_menu::redraw_menu(uint8_t dir,uint8_t pci){
     uint8_t rev = 0;
     uint8_t pr = 0;
@@ -254,7 +257,7 @@ void basic_menu::redraw_menu(uint8_t dir,uint8_t pci){
     uint8_t cr = get_cur_row();
     
     if(device == nullptr) return;
-    //if(options & M_DRAW_CLEAR)device->clear_display();
+
     if(title != nullptr){
         start = 1;
     }
@@ -264,28 +267,11 @@ void basic_menu::redraw_menu(uint8_t dir,uint8_t pci){
         else pr = cr -1;
     }
     else{
-        //Serial.print("pci = ");
-        //Serial.println(pci);
-        //Serial.print("cur_item = ");
-        //Serial.println(cur_item);
-        
         if(cur_item+1 != pci) pr = 0;
         else pr = cr+1;//+start;
-        //Serial.print("pr = ");
-        //Serial.println(pr);
         
     }
-    
-    /*
-    if(dir == 0){   //next
-        //if(options | M_PRINT_CLEAR) device->clear_row(cr+start,0);
-        //device->print(cr+start,0,get_row(cr),1);
-    }
-    else{   //prev
-        if(options | M_PRINT_CLEAR) device->clear_row(cr+1+start,0);
-        device->print(cr+1+start,0,get_row(cr+1));
-    }
-    */
+
     if(options | M_PRINT_CLEAR) device->clear_row(pr+start,0);
     //delay(1000);
     device->print(pr+start,0,get_row(pr));

@@ -104,17 +104,18 @@ void main_menu_actions(int8_t opt){
             prev_menu = MAIN_MENU;
             cur_menu = SUB_MENU_1;
             my_menu.set_items(menus[SUB_MENU_1],menus_cnt[SUB_MENU_1],menus_len[SUB_MENU_1]);
-            my_menu.cur_item = 0;
+            //my_menu.cur_item = 0;
             my_menu.set_title();
             disp.clear_display();
             my_menu.draw_menu();
             break;
         case 5:
+            //entering in sub-menu, save prev. menu and position so we ca restore later
             prev_itm = 5;
             prev_menu = MAIN_MENU;
             cur_menu = SUB_MENU_2;
             my_menu.set_items(menus[SUB_MENU_2],menus_cnt[SUB_MENU_2],menus_len[SUB_MENU_2]);
-            my_menu.cur_item = 0;
+            //my_menu.cur_item = 0;
             my_menu.set_title();
             disp.clear_display();
             my_menu.draw_menu();
